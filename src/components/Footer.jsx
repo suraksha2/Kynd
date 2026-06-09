@@ -1,9 +1,10 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
-import { services } from '../data/services'
 import { cities } from '../data/cities'
+import { useServices } from '../context/ServicesContext'
 
 export default function Footer() {
+  const { services } = useServices()
+
   return (
     <footer className="bg-[#0b1f14] text-neutral-300">
       <div className="max-w-6xl mx-auto px-6 py-14">
@@ -54,7 +55,7 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-3">All services</h4>
             <ul className="grid grid-cols-2 gap-y-1.5 text-neutral-400">
               {services.map(s => (
-                <li key={s.slug}>
+                <li key={s.id}>
                   <Link to={`/services/${s.slug}`} className="hover:text-white">{s.name}</Link>
                 </li>
               ))}

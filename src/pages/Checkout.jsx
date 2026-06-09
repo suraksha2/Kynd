@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { CreditCard, Wallet, Banknote, ShieldCheck } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useBookings } from '../context/BookingsContext'
 
 const Field = ({ label, children }) => (
   <label className="block">
@@ -14,15 +15,70 @@ const inputCls = 'w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm 
 
 export default function Checkout() {
   const { items, subtotal, clear } = useCart()
+  const { addBooking } = useBookings()
   const { state } = useLocation()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
-  const [city, setCity] = useState('Bangalore')
+  const [city, setCity] = useState('')
+  const [cities, setCities] = useState([])
+  const [selectedArea, setSelectedArea] = useState('')
   const [pincode, setPincode] = useState('')
   const [pay, setPay] = useState('upi')
   const [submitting, setSubmitting] = useState(false)
+  const [loadingCities, setLoadingCities] = useState(true)
+  const [citiesError, setCitiesError] = useState(null)
+
+  // Fetch cities from API
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/cities')
+        if (!response.ok) {
+          throw new Error('Failed to fetch cities')
+        }
+        const result = await response.json()
+        const data = result.data || []
+        // Transform backend city data to match frontend format
+        const transformedCities = data.map(city => ({
+          id: city.id,
+          slug: city.cityName.toLowerCase().replace(/\s+/g, '-'),
+          name: city.cityName,
+          tagline: `Trusted house help across ${city.cityName}.`,
+          img: '',
+          areas: city.areas || []
+        }))
+        setCities(transformedCities)
+        // Set first city as default if available
+        if (transformedCities.length > 0) {
+          setCity(transformedCities[0].name)
+        }
+      } catch (error) {
+        setCitiesError(error.message)
+        console.error('Error fetching cities:', error)
+      } finally {
+        setLoadingCities(false)
+      }
+    }
+
+    fetchCities()
+  }, [])
+
+  // Get areas for selected city from API response
+  const selectedCityData = cities.find(c => c.name === city)
+  const cityAreas = selectedCityData?.areas || []
+
+  const handleAreaChange = (e) => {
+    const value = e.target.value
+    setSelectedArea(value)
+  }
+
+  const handleCityChange = (e) => {
+    setCity(e.target.value)
+    setSelectedArea('')
+    setPincode('')
+  }
 
   if (items.length === 0) return <Navigate to="/cart" replace />
 
@@ -30,25 +86,44 @@ export default function Checkout() {
   const scheduledAt = state?.scheduledAt || ''
   const cadence = state?.cadence || 'weekly'
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     if (!name || !phone || !address || !pincode) return
     setSubmitting(true)
-    setTimeout(() => {
-      const bookingId = 'HLP' + Math.random().toString(36).slice(2, 8).toUpperCase()
-      const order = {
-        bookingId,
-        items,
-        total: subtotal,
-        schedule, scheduledAt, cadence,
-        contact: { name, phone, address, city, pincode },
-        payment: pay,
-        placedAt: new Date().toISOString()
+
+    const bookingId = 'HLP' + Math.random().toString(36).slice(2, 8).toUpperCase()
+    const order = {
+      bookingId,
+      items,
+      total: subtotal,
+      schedule, scheduledAt, cadence,
+      contact: { name, phone, address, city, pincode, area: selectedArea },
+      payment: pay,
+      placedAt: new Date().toISOString()
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create booking')
       }
+
       try { localStorage.setItem('helpr.lastOrder', JSON.stringify(order)) } catch {}
+      addBooking(order)
       clear()
       navigate('/booking/confirmed', { state: order, replace: true })
-    }, 600)
+    } catch (error) {
+      console.error('Booking error:', error)
+      alert(error.message || 'Failed to create booking. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const scheduleLabel = schedule === 'instant'
@@ -85,12 +160,30 @@ export default function Checkout() {
                 <Field label="Address"><textarea rows={2} className={inputCls} value={address} onChange={e => setAddress(e.target.value)} required /></Field>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="City">
-                    <select className={inputCls} value={city} onChange={e => setCity(e.target.value)}>
-                      {['Ahmedabad','Bangalore','Chennai','Delhi','Faridabad','Ghaziabad','Gurgaon','Hyderabad','Jaipur','Kolkata','Mumbai','Navi Mumbai','Noida','Pune','Thane'].map(c => <option key={c}>{c}</option>)}
+                    {loadingCities ? (
+                      <select className={inputCls} disabled>
+                        <option>Loading cities...</option>
+                      </select>
+                    ) : citiesError ? (
+                      <select className={inputCls} disabled>
+                        <option>Error loading cities</option>
+                      </select>
+                    ) : (
+                      <select className={inputCls} value={city} onChange={handleCityChange}>
+                        {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                      </select>
+                    )}
+                  </Field>
+                  <Field label="Area">
+                    <select className={inputCls} value={selectedArea} onChange={handleAreaChange} required>
+                      <option value="">Select area</option>
+                      {cityAreas.map(area => (
+                        <option key={area} value={area}>{area}</option>
+                      ))}
                     </select>
                   </Field>
-                  <Field label="Pincode"><input className={inputCls} value={pincode} onChange={e => setPincode(e.target.value)} required /></Field>
                 </div>
+                <Field label="Pincode"><input className={inputCls} value={pincode} onChange={e => setPincode(e.target.value)} placeholder="Enter your pincode" required /></Field>
               </div>
             </div>
 
@@ -123,16 +216,16 @@ export default function Checkout() {
                 {items.map(it => (
                   <li key={it.slug} className="flex justify-between gap-2 text-neutral-700">
                     <span className="truncate">{it.name} × {it.qty}</span>
-                    <span>S${it.priceFrom * it.qty}</span>
+                    <span>S${(it.priceFrom * it.qty).toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-4 pt-4 border-t text-xs text-neutral-500">{scheduleLabel}</div>
               <div className="mt-3 flex justify-between font-bold text-neutral-900">
-                <span>Total</span><span>S${subtotal}</span>
+                <span>Total</span><span>S${subtotal.toFixed(2)}</span>
               </div>
               <button disabled={submitting} className="mt-5 w-full rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold py-3 transition">
-                {submitting ? 'Confirming…' : `Pay & confirm · S$${subtotal}`}
+                {submitting ? 'Confirming…' : `Pay & confirm · S$${subtotal.toFixed(2)}`}
               </button>
             </div>
           </aside>

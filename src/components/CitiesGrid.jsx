@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cities } from '../data/cities'
 
@@ -50,7 +50,8 @@ function CityCard({ city }) {
   )
 }
 
-export default function CitiesGrid({ title = 'Available in 15 Indian cities', className = '' }) {
+export default function CitiesGrid({ title = 'Available in 15 Indian cities', className = '', filteredCities = null }) {
+  const citiesToShow = filteredCities || cities
   return (
     <section className={`py-14 ${className}`}>
       <div className="max-w-6xl mx-auto px-6">
@@ -58,7 +59,7 @@ export default function CitiesGrid({ title = 'Available in 15 Indian cities', cl
           {title}
         </h2>
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-          {cities.map(c => <CityCard key={c.slug} city={c} />)}
+          {citiesToShow.map(c => <CityCard key={c.slug} city={c} />)}
         </div>
       </div>
     </section>

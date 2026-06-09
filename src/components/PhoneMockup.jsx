@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Bell, Search, Home as HomeIcon, Heart, User,
   WashingMachine, SprayCan, Brush, ShieldCheck, Sparkles,

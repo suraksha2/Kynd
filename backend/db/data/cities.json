@@ -1,0 +1,48 @@
+[
+  {
+    "id": "city_1776931227669_nrfm7x",
+    "cityName": "delhi",
+    "pinCode": "110096",
+    "createdAt": "2026-04-23T08:00:27.669Z",
+    "updatedAt": "2026-04-23T08:00:27.669Z"
+  },
+  {
+    "id": "city_1776939009386_ygtfte",
+    "cityName": "singapore",
+    "pinCode": "520147",
+    "createdAt": "2026-04-23T10:10:09.386Z",
+    "updatedAt": "2026-04-23T10:10:09.386Z"
+  },
+  {
+    "id": "city_1777024441323_vvzo5a",
+    "cityName": "Delhi",
+    "pinCode": "4324",
+    "serviceCategoryId": "sc_001",
+    "createdAt": "2026-04-24T09:54:01.323Z",
+    "updatedAt": "2026-04-25T01:56:04.126Z"
+  },
+  {
+    "id": "city_1777082182497_yiw6vc",
+    "cityName": "noida",
+    "pinCode": "121313",
+    "serviceCategoryId": "sc_002",
+    "createdAt": "2026-04-25T01:56:22.497Z",
+    "updatedAt": "2026-04-25T02:26:56.299Z"
+  },
+  {
+    "id": "city_1777099757352_svpco0",
+    "cityName": "lucknow",
+    "pinCode": "1213213",
+    "serviceCategoryId": "sc_002",
+    "createdAt": "2026-04-25T06:49:17.352Z",
+    "updatedAt": "2026-04-25T06:49:17.352Z"
+  },
+  {
+    "id": "city_1777102479367_4kjiyr",
+    "cityName": "delhi",
+    "pinCode": "121323",
+    "serviceCategoryId": "sc_002",
+    "createdAt": "2026-04-25T07:34:39.367Z",
+    "updatedAt": "2026-04-25T07:34:39.367Z"
+  }
+]

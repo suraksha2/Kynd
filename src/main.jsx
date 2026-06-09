@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
 import App from './App.jsx'
 import { CartProvider } from './context/CartContext.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
+import { BookingsProvider } from './context/BookingsContext.jsx'
+import { ServicesProvider } from './context/ServicesContext.jsx'
 
 /* Ionic core CSS — required.
    NOTE: structure.css is intentionally NOT imported because it sets
@@ -31,9 +34,15 @@ initNative() // 'md' = Material Design (Android look) | 'ios' for iOS
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <CartProvider>
-        <App />
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <BookingsProvider>
+            <ServicesProvider>
+              <App />
+            </ServicesProvider>
+          </BookingsProvider>
+        </CartProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 )

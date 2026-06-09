@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, Navigate, useNavigate } from 'react-router-dom'
 import { Check, X, ShoppingBag, Zap, Clock, Tag } from 'lucide-react'
-import { services, findService } from '../data/services'
 import CitiesGrid from '../components/CitiesGrid'
 import { useCart } from '../context/CartContext'
+import { useServices } from '../context/ServicesContext'
 import { DownloadCta } from './Home'
+import { cities } from '../data/cities'
 
 const BookingCard = ({ svc }) => {
   const { addItem } = useCart()
@@ -137,8 +138,8 @@ const Inclusions = ({ svc }) => {
 }
 
 /* ---------- "More ways to keep your home clean" — icon-tile grid of other services ---------- */
-const MoreServices = ({ currentSlug }) => {
-  const others = services.filter(s => s.slug !== currentSlug)
+const MoreServices = ({ currentSlug, allServices }) => {
+  const others = allServices.filter(s => s.slug !== currentSlug)
   return (
     <section className="py-14 bg-neutral-50">
       <div className="max-w-5xl mx-auto px-6">
@@ -148,7 +149,7 @@ const MoreServices = ({ currentSlug }) => {
         <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
           {others.map(s => (
             <Link
-              key={s.slug}
+              key={s.id}
               to={`/services/${s.slug}`}
               className="group rounded-2xl bg-white p-3 md:p-4 hover:shadow-soft transition flex flex-col items-center text-center"
             >
@@ -173,15 +174,68 @@ const MoreServices = ({ currentSlug }) => {
 
 export default function ServiceDetail() {
   const { slug } = useParams()
-  const svc = findService(slug)
+  const { services, loading } = useServices()
+  const [availableCities, setAvailableCities] = useState([])
+
+  useEffect(() => {
+    const fetchCitiesForService = async () => {
+      const svc = services.find(s => s.slug === slug)
+      if (svc) {
+        try {
+          const response = await fetch(`http://localhost:3001/api/city-services/by-service/${svc.id}`)
+          const result = await response.json()
+          if (result.data) {
+            setAvailableCities(result.data)
+          }
+        } catch (error) {
+          console.error('Failed to fetch cities for service:', error)
+        }
+      }
+    }
+    if (services.length > 0) {
+      fetchCitiesForService()
+    }
+  }, [slug, services])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-neutral-500">Loading...</div>
+      </div>
+    )
+  }
+
+  const svc = services.find(s => s.slug === slug)
   if (!svc) return <Navigate to="/services" replace />
+
+  // Map city IDs from backend to actual city objects from static data
+  const filteredCities = availableCities.length > 0
+    ? cities.filter(city => availableCities.some(ac => ac.cityId === city.id.toString()))
+    : []
 
   return (
     <div>
       <ServiceHero svc={svc} />
       <Inclusions svc={svc} />
-      <CitiesGrid title="Available in 15 Indian cities" className="bg-white" />
-      <MoreServices currentSlug={svc.slug} />
+      {filteredCities.length > 0 ? (
+        <CitiesGrid
+          title={`Available in ${filteredCities.length} ${filteredCities.length === 1 ? 'city' : 'cities'}`}
+          className="bg-white"
+          filteredCities={filteredCities}
+        />
+      ) : (
+        <section className="py-14 bg-white">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
+              No cities available for this service yet
+            </h2>
+            <p className="mt-4 text-neutral-600">
+              This service is not currently available in any cities. Please check back later.
+            </p>
+          </div>
+        </section>
+      )}
+      <MoreServices currentSlug={svc.slug} allServices={services} />
       <DownloadCta />
     </div>
   )

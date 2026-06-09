@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'helpr.cart.v1'
 
 const parsePrice = (str = '') => {
-  const n = parseInt(String(str).replace(/[^0-9]/g, ''), 10)
+  const n = parseFloat(String(str).replace(/[^0-9.]/g, ''))
   return Number.isFinite(n) ? n : 0
 }
 
@@ -30,7 +30,7 @@ export function CartProvider({ children }) {
         slug: svc.slug,
         name: svc.name,
         img: svc.img,
-        priceFrom: parsePrice(svc.pricingFrom),
+        priceFrom: svc.price || parsePrice(svc.pricingFrom),
         duration: svc.duration,
         qty
       }]

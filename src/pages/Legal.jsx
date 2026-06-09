@@ -1,4 +1,3 @@
-import React from 'react'
 import PageHero from '../components/PageHero'
 
 const Section = ({ title, body }) => (

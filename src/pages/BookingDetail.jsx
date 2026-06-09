@@ -1,0 +1,264 @@
+import React, { useMemo, useState } from 'react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import {
+  ArrowLeft, Calendar, Clock, MapPin, Phone, User, CreditCard, Wallet, Banknote,
+  CheckCircle2, XCircle, Repeat, Zap, AlertTriangle, RotateCcw, X
+} from 'lucide-react'
+import { useBookings } from '../context/BookingsContext'
+
+const paymentLabel = (p) => p === 'cod' ? 'Cash after service' : p === 'upi' ? 'UPI' : p === 'card' ? 'Card' : (p || '').toUpperCase()
+const paymentIcon = (p) => p === 'cod' ? Banknote : p === 'card' ? CreditCard : Wallet
+
+function isReschedulable(b) {
+  if (b.status !== 'upcoming') return false
+  if (b.schedule === 'recurring' || b.schedule === 'instant') return false
+  if (!b.scheduledAt) return false
+  return new Date(b.scheduledAt).getTime() > Date.now()
+}
+function isCancellable(b) {
+  if (b.status !== 'upcoming') return false
+  if (b.schedule === 'scheduled' && b.scheduledAt) {
+    return new Date(b.scheduledAt).getTime() > Date.now()
+  }
+  return true
+}
+
+function toLocalInput(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const tz = d.getTimezoneOffset() * 60000
+  return new Date(d.getTime() - tz).toISOString().slice(0, 16)
+}
+
+function StatusBanner({ booking }) {
+  let cls = 'bg-brand-50 text-brand-700 border-brand-100'
+  let Icon = Calendar
+  let label = 'Scheduled'
+  if (booking.status === 'cancelled') { cls = 'bg-rose-50 text-rose-700 border-rose-100'; Icon = XCircle; label = 'Cancelled' }
+  else if (booking.status === 'completed') { cls = 'bg-emerald-50 text-emerald-700 border-emerald-100'; Icon = CheckCircle2; label = 'Completed' }
+  else if (booking.schedule === 'instant') { cls = 'bg-amber-50 text-amber-700 border-amber-100'; Icon = Zap; label = 'In progress — Pro on the way' }
+  else if (booking.schedule === 'recurring') { cls = 'bg-indigo-50 text-indigo-700 border-indigo-100'; Icon = Repeat; label = `Recurring · ${booking.cadence}` }
+  return (
+    <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl border text-sm font-semibold ${cls}`}>
+      <Icon className="w-4 h-4" /> {label}
+    </div>
+  )
+}
+
+export default function BookingDetail() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { getBooking, cancelBooking, rescheduleBooking } = useBookings()
+  const booking = getBooking(id)
+
+  const [showReschedule, setShowReschedule] = useState(false)
+  const [showCancel, setShowCancel] = useState(false)
+  const [newAt, setNewAt] = useState(() => toLocalInput(booking?.scheduledAt) || '')
+  const [reason, setReason] = useState('')
+
+  const minDt = useMemo(() => toLocalInput(new Date(Date.now() + 60 * 60 * 1000).toISOString()), [])
+
+  if (!booking) return <Navigate to="/bookings" replace />
+
+  const PIcon = paymentIcon(booking.payment)
+
+  const onConfirmReschedule = () => {
+    if (!newAt) return
+    rescheduleBooking(booking.bookingId, new Date(newAt).toISOString())
+    setShowReschedule(false)
+  }
+  const onConfirmCancel = () => {
+    cancelBooking(booking.bookingId, reason.trim())
+    setShowCancel(false)
+  }
+
+  const whenText = booking.schedule === 'instant'
+    ? `Instant booking · placed ${new Date(booking.placedAt).toLocaleString()}`
+    : booking.schedule === 'recurring'
+      ? `Recurring (${booking.cadence}) · started ${new Date(booking.placedAt).toLocaleDateString()}`
+      : booking.scheduledAt ? new Date(booking.scheduledAt).toLocaleString() : '—'
+
+  return (
+    <section className="pt-28 md:pt-32 pb-24">
+      <div className="max-w-2xl mx-auto px-5">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-brand-700 mb-3"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-neutral-900">Booking details</h1>
+            <p className="mt-1 text-xs text-neutral-500">ID #{booking.bookingId}</p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <StatusBanner booking={booking} />
+        </div>
+
+        <div className="mt-5 rounded-2xl bg-white ring-1 ring-neutral-100 p-5 space-y-3">
+          <div className="flex items-start gap-3">
+            <Clock className="w-4 h-4 text-brand-700 mt-0.5" />
+            <div>
+              <div className="text-xs text-neutral-500">When</div>
+              <div className="text-sm font-semibold text-neutral-900">{whenText}</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <MapPin className="w-4 h-4 text-brand-700 mt-0.5" />
+            <div>
+              <div className="text-xs text-neutral-500">Where</div>
+              <div className="text-sm font-semibold text-neutral-900">
+                {booking.contact?.address}, {booking.contact?.city} {booking.contact?.pincode}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-start gap-3">
+              <User className="w-4 h-4 text-brand-700 mt-0.5" />
+              <div className="min-w-0">
+                <div className="text-xs text-neutral-500">Name</div>
+                <div className="text-sm font-semibold text-neutral-900 truncate">{booking.contact?.name}</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Phone className="w-4 h-4 text-brand-700 mt-0.5" />
+              <div className="min-w-0">
+                <div className="text-xs text-neutral-500">Phone</div>
+                <a href={`tel:${booking.contact?.phone}`} className="text-sm font-semibold text-neutral-900">{booking.contact?.phone}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl bg-white ring-1 ring-neutral-100 p-5">
+          <h2 className="font-bold text-neutral-900">Services</h2>
+          <ul className="mt-3 divide-y">
+            {booking.items?.map(it => (
+              <li key={it.slug} className="py-3 flex items-center gap-3">
+                {it.img ? (
+                  <img src={it.img} alt="" className="w-12 h-12 rounded-lg object-cover bg-neutral-100" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-brand-50" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-neutral-900 truncate">{it.name}</div>
+                  <div className="text-xs text-neutral-500">Qty {it.qty}{it.duration ? ` · ${it.duration}` : ''}</div>
+                </div>
+                <div className="text-sm font-semibold text-neutral-900">S${(it.priceFrom * it.qty).toFixed(2)}</div>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 pt-3 border-t flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-neutral-700">
+              <PIcon className="w-4 h-4 text-brand-700" /> {paymentLabel(booking.payment)}
+            </div>
+            <div className="font-bold text-neutral-900">Total · S${booking.total}</div>
+          </div>
+        </div>
+
+        {booking.history?.length > 0 && (
+          <div className="mt-5 rounded-2xl bg-white ring-1 ring-neutral-100 p-5">
+            <h2 className="font-bold text-neutral-900">Activity</h2>
+            <ol className="mt-3 space-y-2">
+              {booking.history.map((h, i) => (
+                <li key={i} className="text-xs text-neutral-600 flex gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-600 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-neutral-800 capitalize">{h.type}</div>
+                    <div className="text-neutral-500">{new Date(h.at).toLocaleString()}{h.note ? ` — ${h.note}` : ''}</div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {booking.status === 'upcoming' && (
+          <div className="mt-5 grid sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowReschedule(true)}
+              disabled={!isReschedulable(booking)}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white ring-1 ring-neutral-200 hover:ring-brand-300 text-neutral-900 font-semibold py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RotateCcw className="w-4 h-4" /> Reschedule
+            </button>
+            <button
+              onClick={() => setShowCancel(true)}
+              disabled={!isCancellable(booking)}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <XCircle className="w-4 h-4" /> Cancel booking
+            </button>
+            {!isReschedulable(booking) && booking.schedule !== 'instant' && booking.schedule !== 'recurring' && (
+              <p className="sm:col-span-2 text-[11px] text-neutral-500 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> Reschedule unavailable for past or in-progress bookings.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Reschedule modal */}
+      {showReschedule && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setShowReschedule(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-neutral-900">Reschedule booking</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">Pick a new date & time.</p>
+              </div>
+              <button onClick={() => setShowReschedule(false)} className="text-neutral-400 hover:text-neutral-700"><X className="w-4 h-4" /></button>
+            </div>
+            <label className="block mt-4">
+              <span className="block text-xs font-semibold text-neutral-700 mb-1.5">New date & time</span>
+              <input
+                type="datetime-local"
+                min={minDt}
+                value={newAt}
+                onChange={(e) => setNewAt(e.target.value)}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-600"
+              />
+            </label>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setShowReschedule(false)} className="flex-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">Back</button>
+              <button onClick={onConfirmReschedule} disabled={!newAt} className="flex-1 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold py-2.5 text-sm">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel modal */}
+      {showCancel && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setShowCancel(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-neutral-900">Cancel this booking?</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">This cannot be undone.</p>
+              </div>
+              <button onClick={() => setShowCancel(false)} className="text-neutral-400 hover:text-neutral-700"><X className="w-4 h-4" /></button>
+            </div>
+            <label className="block mt-4">
+              <span className="block text-xs font-semibold text-neutral-700 mb-1.5">Reason (optional)</span>
+              <textarea
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Plans changed, found another option, etc."
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-600"
+              />
+            </label>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setShowCancel(false)} className="flex-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">Keep booking</button>
+              <button onClick={onConfirmCancel} className="flex-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 text-sm">Cancel booking</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}

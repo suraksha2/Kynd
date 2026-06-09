@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   IonTabBar,
@@ -11,16 +11,18 @@ import {
   homeOutline,
   sparklesOutline,
   cartOutline,
-  helpCircleOutline,
+  personCircleOutline,
 } from 'ionicons/icons'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function MainLayout() {
   const { pathname, hash } = useLocation()
   const navigate = useNavigate()
   const { items } = useCart() || { items: [] }
+  const { isAuthenticated } = useAuth()
   const cartCount = (items || []).reduce((sum, i) => sum + (i.qty || 1), 0)
 
   useEffect(() => {
@@ -32,14 +34,15 @@ export default function MainLayout() {
   }, [pathname, hash])
 
   const tabs = [
-    { tab: 'home',     path: '/',         icon: homeOutline,        label: 'Home' },
-    { tab: 'services', path: '/services', icon: sparklesOutline,    label: 'Services' },
-    { tab: 'cart',     path: '/cart',     icon: cartOutline,        label: 'Cart' },
-    { tab: 'support',  path: '/support',  icon: helpCircleOutline,  label: 'Support' },
+    { tab: 'home',     path: '/',                                  icon: homeOutline,           label: 'Home' },
+    { tab: 'services', path: '/services',                          icon: sparklesOutline,       label: 'Services' },
+    { tab: 'cart',     path: '/cart',                              icon: cartOutline,           label: 'Cart' },
+    { tab: 'account',  path: isAuthenticated ? '/account' : '/login', icon: personCircleOutline, label: 'Account' },
   ]
 
   const activeTab =
     tabs.find((t) => t.path !== '/' && pathname.startsWith(t.path))?.tab ||
+    (pathname === '/login' || pathname === '/signup' || pathname === '/account' ? 'account' : '') ||
     (pathname === '/' ? 'home' : '')
 
   return (

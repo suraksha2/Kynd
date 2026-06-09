@@ -1,8 +1,6 @@
-import React from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { MapPin, Star } from 'lucide-react'
-import { findCity } from '../data/cities'
-import { services } from '../data/services'
+import { useState, useEffect } from 'react'
 import StoreButtons from '../components/StoreButtons'
 import CitiesGrid from '../components/CitiesGrid'
 import { DownloadCta } from './Home'
@@ -82,48 +80,122 @@ const Localities = ({ city }) => (
 )
 
 /* ---------- Services available in this city ---------- */
-const ServicesInCity = ({ city }) => (
-  <section className="py-14">
-    <div className="max-w-5xl mx-auto px-6">
-      <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 leading-tight">
-        Services available in<br />{city.name}
-      </h2>
-      <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
-        {services.map(s => (
-          <Link
-            key={s.slug}
-            to={`/services/${s.slug}`}
-            className="group rounded-2xl bg-neutral-50 p-3 md:p-4 hover:shadow-soft hover:bg-white transition flex flex-col items-center text-center"
-          >
-            <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100">
-              <img
-                src={s.img}
-                alt={s.name}
-                loading="lazy"
-                className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
-              />
-            </div>
-            <div className="mt-2 text-[11px] md:text-xs font-medium text-neutral-700 leading-snug">
-              {s.name}
-            </div>
-          </Link>
-        ))}
+const ServicesInCity = () => {
+  const [services, setServices] = useState([])
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/services')
+        const result = await response.json()
+        if (result.data) {
+          const mappedServices = result.data.map(service => ({
+            id: service.id,
+            slug: service.name.toLowerCase().replace(/\s+/g, '-'),
+            name: service.name,
+            img: service.image || '/images/hourly-bookings.webp',
+            price: parseFloat(service.price),
+            pricingFrom: `S$${parseFloat(service.price).toFixed(2)}`
+          }))
+          setServices(mappedServices)
+        }
+      } catch (error) {
+        console.error('Failed to fetch services:', error)
+      }
+    }
+    fetchServices()
+  }, [])
+
+  return (
+    <section className="py-14">
+      <div className="max-w-5xl mx-auto px-6">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 leading-tight">
+          Services available
+        </h2>
+        <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+          {services.map(s => (
+            <Link
+              key={s.id}
+              to={`/services/${s.slug}`}
+              className="group rounded-2xl bg-neutral-50 p-3 md:p-4 hover:shadow-soft hover:bg-white transition flex flex-col items-center text-center"
+            >
+              <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100">
+                <img
+                  src={s.img}
+                  alt={s.name}
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
+                />
+              </div>
+              <div className="mt-2 text-[11px] md:text-xs font-medium text-neutral-700 leading-snug">
+                {s.name}
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-)
+    </section>
+  )
+}
 
 export default function CityDetail() {
   const { slug } = useParams()
-  const city = findCity(slug)
-  if (!city) return <Navigate to="/cities" replace />
+  const [city, setCity] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+    
+    const fetchCity = async () => {
+      try {
+        // Convert slug to city name (e.g., "pune" -> "Pune")
+        const cityName = slug ? slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : ''
+        const response = await fetch(`http://localhost:3001/api/cities/by-name/${encodeURIComponent(cityName)}`)
+        const data = await response.json()
+        
+        if (isMounted) {
+          if (response.ok) {
+            setCity(data.data)
+          } else {
+            setError(data.error || 'City not found')
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('Failed to fetch city data')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchCity()
+
+    return () => {
+      isMounted = false
+    }
+  }, [slug])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-neutral-500">Loading...</div>
+      </div>
+    )
+  }
+
+  if (error || !city) {
+    return <Navigate to="/cities" replace />
+  }
 
   return (
     <div>
       <CityHero city={city} />
       <Localities city={city} />
-      <ServicesInCity city={city} />
-      <CitiesGrid title="Available in 15 Indian cities" className="bg-neutral-50" />
+      <ServicesInCity />
       <DownloadCta />
     </div>
   )

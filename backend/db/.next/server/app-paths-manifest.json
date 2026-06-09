@@ -1,0 +1,9 @@
+{
+  "/api/cities/route": "app/api/cities/route.js",
+  "/api/services/route": "app/api/services/route.js",
+  "/(admin)/orders/page": "app/(admin)/orders/page.js",
+  "/(admin)/services/page": "app/(admin)/services/page.js",
+  "/(admin)/analytics/page": "app/(admin)/analytics/page.js",
+  "/(admin)/clients/page": "app/(admin)/clients/page.js",
+  "/(admin)/city-services/page": "app/(admin)/city-services/page.js"
+}

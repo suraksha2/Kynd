@@ -1,4 +1,3 @@
-import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
 import Home from './pages/Home'
@@ -13,6 +12,14 @@ import { TnC, PrivacyPolicy, CancellationPolicy, Credits } from './pages/Legal'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import BookingConfirmed from './pages/BookingConfirmed'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import Account from './pages/Account'
+import Bookings from './pages/Bookings'
+import BookingDetail from './pages/BookingDetail'
+import AdminPanel from './pages/AdminPanel'
 
 export default function App() {
   return (
@@ -29,6 +36,14 @@ export default function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/booking/confirmed" element={<BookingConfirmed />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/account" element={<Account />} />
+        <Route path="/bookings" element={<Bookings />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/bookings/:id" element={<BookingDetail />} />
         <Route path="/tnc" element={<TnC />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/cancellation-policy" element={<CancellationPolicy />} />

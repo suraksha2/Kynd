@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Trash2, Minus, Plus, ShoppingBag, Zap, Calendar, Repeat } from 'lucide-react'
 import { useCart } from '../context/CartContext'
+import { useServices } from '../context/ServicesContext'
 
 const ScheduleOption = ({ value, current, onChange, icon: Icon, title, sub }) => {
   const active = current === value
@@ -24,10 +25,19 @@ const ScheduleOption = ({ value, current, onChange, icon: Icon, title, sub }) =>
 
 export default function Cart() {
   const { items, subtotal, setQty, removeItem } = useCart()
+  const { fetchServices } = useServices()
   const [schedule, setSchedule] = useState('instant')
   const [scheduledAt, setScheduledAt] = useState('')
   const [cadence, setCadence] = useState('weekly')
   const navigate = useNavigate()
+
+  // Fetch only the services that are in the cart
+  useEffect(() => {
+    if (items.length > 0) {
+      const cartSlugs = items.map(item => item.slug)
+      fetchServices(cartSlugs)
+    }
+  }, [items, fetchServices])
 
   const proceed = () => {
     if (items.length === 0) return
@@ -67,19 +77,31 @@ export default function Cart() {
           <div>
             <div className="rounded-2xl bg-white ring-1 ring-neutral-100 divide-y">
               {items.map(it => (
-                <div key={it.slug} className="p-4 flex gap-4 items-center">
-                  <img src={it.img} alt={it.name} className="w-16 h-16 rounded-xl object-cover bg-neutral-100" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-neutral-900 text-sm">{it.name}</div>
-                    <div className="text-xs text-neutral-500 mt-0.5">{it.duration} · S${it.priceFrom} each</div>
+                <div key={it.slug} className="p-4">
+                  {/* Top: image + name + remove */}
+                  <div className="flex gap-3 items-start">
+                    <img src={it.img} alt={it.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover bg-neutral-100 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-neutral-900 text-sm leading-snug break-words">{it.name}</div>
+                      <div className="text-xs text-neutral-500 mt-0.5">{it.duration} · S${it.priceFrom.toFixed(2)} each</div>
+                    </div>
+                    <button
+                      onClick={() => removeItem(it.slug)}
+                      aria-label="Remove item"
+                      className="text-neutral-400 hover:text-red-500 p-1 shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-1 py-1">
-                    <button onClick={() => setQty(it.slug, it.qty - 1)} className="w-7 h-7 grid place-items-center rounded-full hover:bg-white"><Minus className="w-3.5 h-3.5" /></button>
-                    <span className="text-sm font-semibold w-5 text-center">{it.qty}</span>
-                    <button onClick={() => setQty(it.slug, it.qty + 1)} className="w-7 h-7 grid place-items-center rounded-full hover:bg-white"><Plus className="w-3.5 h-3.5" /></button>
+                  {/* Bottom: qty + price */}
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-1 py-1">
+                      <button onClick={() => setQty(it.slug, it.qty - 1)} aria-label="Decrease" className="w-7 h-7 grid place-items-center rounded-full hover:bg-white"><Minus className="w-3.5 h-3.5" /></button>
+                      <span className="text-sm font-semibold w-6 text-center">{it.qty}</span>
+                      <button onClick={() => setQty(it.slug, it.qty + 1)} aria-label="Increase" className="w-7 h-7 grid place-items-center rounded-full hover:bg-white"><Plus className="w-3.5 h-3.5" /></button>
+                    </div>
+                    <div className="font-bold text-neutral-900 text-sm">S${(it.priceFrom * it.qty).toFixed(2)}</div>
                   </div>
-                  <div className="w-20 text-right font-semibold text-neutral-900 text-sm">S${it.priceFrom * it.qty}</div>
-                  <button onClick={() => removeItem(it.slug)} className="text-neutral-400 hover:text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
                 </div>
               ))}
             </div>
@@ -119,12 +141,12 @@ export default function Cart() {
             <div className="rounded-2xl bg-white ring-1 ring-neutral-100 p-5 shadow-soft">
               <h3 className="font-bold text-neutral-900">Summary</h3>
               <div className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between text-neutral-600"><span>Subtotal</span><span>S${subtotal}</span></div>
+                <div className="flex justify-between text-neutral-600"><span>Subtotal</span><span>S${subtotal.toFixed(2)}</span></div>
                 <div className="flex justify-between text-neutral-600"><span>Visit fee</span><span>S$0</span></div>
                 <div className="flex justify-between text-neutral-600"><span>Taxes</span><span>Included</span></div>
               </div>
               <div className="mt-4 pt-4 border-t flex justify-between font-bold text-neutral-900">
-                <span>Total</span><span>S${subtotal}</span>
+                <span>Total</span><span>S${subtotal.toFixed(2)}</span>
               </div>
               <button
                 onClick={proceed}

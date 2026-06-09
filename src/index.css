@@ -4,6 +4,9 @@
 
 html, body, #root { min-height: 100%; }
 
+/* Prevent any rogue child from triggering horizontal scroll on mobile */
+html, body, #root { overflow-x: hidden; max-width: 100%; }
+
 /* Native (Capacitor) safe-area insets for status bar / notches / gesture nav */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
@@ -19,11 +22,22 @@ body {
 /* Make the bottom tab bar respect the gesture inset */
 .tabbar-safe { padding-bottom: var(--safe-bottom); }
 
+/* Floating top nav respects the iOS notch / Android status bar */
+.app-header {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--safe-top);
+  padding-top: 1rem;
+  z-index: 20;
+}
+
 /* Defensive override: Ionic's structure.css (if it ever sneaks back in)
    sets html/body to fixed/overflow:hidden. Force normal page scroll. */
 html, body {
   position: static !important;
-  overflow: visible !important;
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
   height: auto !important;
 }
 

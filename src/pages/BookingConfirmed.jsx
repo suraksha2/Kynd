@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
 
@@ -35,16 +34,17 @@ export default function BookingConfirmed() {
               <div className="text-neutral-500 mb-2">Services</div>
               <ul className="space-y-1">
                 {order.items.map(it => (
-                  <li key={it.slug} className="flex justify-between"><span>{it.name} × {it.qty}</span><span>S${it.priceFrom * it.qty}</span></li>
+                  <li key={it.slug} className="flex justify-between"><span>{it.name} × {it.qty}</span><span>S${(it.priceFrom * it.qty).toFixed(2)}</span></li>
                 ))}
               </ul>
-              <div className="mt-3 pt-3 border-t flex justify-between font-bold text-neutral-900"><span>Total</span><span>S${order.total}</span></div>
+              <div className="mt-3 pt-3 border-t flex justify-between font-bold text-neutral-900"><span>Total</span><span>S${order.total.toFixed(2)}</span></div>
             </div>
           </div>
 
           <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/" className="rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-semibold px-6 py-3 text-sm">Back to home</Link>
-            <Link to="/services" className="rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3 text-sm">Book another service</Link>
+            <Link to={`/bookings/${order.bookingId}`} className="rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3 text-sm">View booking</Link>
+            <Link to="/services" className="rounded-full bg-white ring-1 ring-neutral-200 hover:ring-brand-300 text-neutral-900 font-semibold px-6 py-3 text-sm">Book another</Link>
           </div>
         </div>
       </div>

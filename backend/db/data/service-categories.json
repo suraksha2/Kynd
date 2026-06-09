@@ -1,0 +1,23 @@
+[
+  {
+    "id": "sc_001",
+    "name": "Barber",
+    "description": "Haircuts, beard trims, and grooming services.",
+    "createdAt": "2026-04-22T09:53:40.531Z",
+    "updatedAt": "2026-04-22T09:53:40.531Z"
+  },
+  {
+    "id": "sc_002",
+    "name": "Home Cleaning",
+    "description": "Residential and commercial cleaning support.",
+    "createdAt": "2026-04-22T09:53:40.531Z",
+    "updatedAt": "2026-04-22T09:53:40.531Z"
+  },
+  {
+    "id": "sc_003",
+    "name": "Electrician",
+    "description": "Electrical installation, repair, and maintenance.",
+    "createdAt": "2026-04-22T09:53:40.531Z",
+    "updatedAt": "2026-04-22T09:53:40.531Z"
+  }
+]

@@ -2,92 +2,51 @@
 
 import { useState, useEffect } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
+  AreaChart, Area,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
+import {
+  ShoppingCart, DollarSign, Users, TrendingUp, TrendingDown,
+  CheckCircle, XCircle, Clock, MapPin, Star,
+} from "lucide-react";
+import clsx from "clsx";
 
-const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444"];
+const BAR_COLORS = ["#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe", "#ddd6fe", "#e0e7ff"];
+
+function GrowthBadge({ value }: { value: number }) {
+  const positive = value >= 0;
+  return (
+    <span className={clsx(
+      "inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-lg",
+      positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
+    )}>
+      {positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+      {positive ? "+" : ""}{value}%
+    </span>
+  );
+}
+
+const tooltipStyle = {
+  borderRadius: "12px",
+  border: "1px solid #f1f5f9",
+  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+  fontSize: "12px",
+  padding: "8px 12px",
+};
 
 export default function AnalyticsPage() {
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
-  const [stats, setStats] = useState({
-    avgOrderValue: 0,
-    conversionRate: 0,
-    bounceRate: 0,
-    activeSessions: 0,
-  });
+  const [data, setData]     = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [chartTab, setChartTab] = useState<"revenue" | "orders">("revenue");
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  useEffect(() => { fetchAnalytics(); }, []);
 
   async function fetchAnalytics() {
     try {
-      const [analyticsRes, ordersRes] = await Promise.all([
-        fetch("/api/analytics"),
-        fetch("/api/orders"),
-      ]);
-
-      const analyticsJson = await analyticsRes.json();
-      const ordersJson = await ordersRes.json();
-
-      if (analyticsJson.data) {
-        setMonthlyData(analyticsJson.data);
-      }
-
-      if (ordersJson.data) {
-        // Calculate orders by month for bar chart
-        const ordersByMonth: Record<string, { orders: number; revenue: number }> = {};
-        ordersJson.data.forEach((order: any) => {
-          const month = new Date(order.date).toLocaleString('default', { month: 'short' });
-          if (!ordersByMonth[month]) {
-            ordersByMonth[month] = { orders: 0, revenue: 0 };
-          }
-          ordersByMonth[month].orders += 1;
-          ordersByMonth[month].revenue += order.amount || 0;
-        });
-
-        const monthlyChartData = Object.entries(ordersByMonth).map(([month, data]) => ({
-          month,
-          orders: data.orders,
-          revenue: data.revenue,
-        }));
-        setMonthlyData(monthlyChartData);
-
-        // Calculate category data from services
-        const categoryCount: Record<string, number> = {};
-        ordersJson.data.forEach((order: any) => {
-          const category = order.serviceCategory || "Other";
-          categoryCount[category] = (categoryCount[category] || 0) + 1;
-        });
-
-        const totalOrders = ordersJson.data.length;
-        const categoryChartData = Object.entries(categoryCount).map(([name, value]) => ({
-          name,
-          value: Math.round((value / totalOrders) * 100),
-        }));
-        setCategoryData(categoryChartData);
-
-        // Calculate stats
-        const totalRevenue = ordersJson.data.reduce((sum: number, order: any) => sum + (order.amount || 0), 0);
-        setStats({
-          avgOrderValue: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
-          conversionRate: 3.6,
-          bounceRate: 28.4,
-          activeSessions: 142,
-        });
-      }
+      const res  = await fetch("/api/analytics");
+      const json = await res.json();
+      setData(json);
     } catch (err) {
       console.error("Failed to fetch analytics", err);
     } finally {
@@ -97,74 +56,344 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="text-gray-500 text-sm">Loading analytics...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-1.5">
+            {[0,1,2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <p className="text-sm text-gray-400">Loading analytics…</p>
+        </div>
       </div>
     );
   }
 
+  const kpi          = data?.kpi          ?? {};
+  const monthly      = data?.monthly      ?? [];
+  const statusBreak  = data?.statusBreakdown ?? [];
+  const topServices  = data?.topServices  ?? [];
+  const topCities    = data?.topCities    ?? [];
+
+  // Status donut data
+  const statusLabels: Record<string, { label: string; color: string }> = {
+    completed: { label: "Completed", color: "#10b981" },
+    upcoming:  { label: "Upcoming",  color: "#6366f1" },
+    cancelled: { label: "Cancelled", color: "#ef4444" },
+  };
+  const donutData = statusBreak.map((r: any) => ({
+    name:  (statusLabels[r.status]?.label ?? r.status),
+    value: Number(r.count),
+    color: statusLabels[r.status]?.color ?? "#9ca3af",
+  }));
+  const totalBookings = donutData.reduce((s: number, d: any) => s + d.value, 0);
+
+  // Top services — normalise to max for bar width
+  const maxSvcCount = topServices[0]?.count || 1;
+
+  // Top cities — normalise
+  const maxCityBookings = topCities[0]?.bookings || 1;
+
   return (
-    <div className="space-y-6">
-      {/* Summary row */}
+    <div className="space-y-5 pb-6">
+
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: "Avg. Order Value", value: `$${stats.avgOrderValue}` },
-          { label: "Conversion Rate", value: `${stats.conversionRate}%` },
-          { label: "Bounce Rate", value: `${stats.bounceRate}%` },
-          { label: "Active Sessions", value: stats.activeSessions },
-        ].map((item) => (
-          <div key={item.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-center">
-            <p className="text-2xl font-bold text-indigo-600">{item.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{item.label}</p>
+          {
+            label: "Total Revenue",
+            value: `S$${Number(kpi.totalRevenue ?? 0).toLocaleString("en-SG")}`,
+            icon: DollarSign, color: "bg-indigo-500",
+            badge: <GrowthBadge value={kpi.revenueGrowth ?? 0} />,
+            sub: "vs last month",
+          },
+          {
+            label: "Total Bookings",
+            value: Number(kpi.totalOrders ?? 0).toLocaleString(),
+            icon: ShoppingCart, color: "bg-emerald-500",
+            badge: <GrowthBadge value={kpi.ordersGrowth ?? 0} />,
+            sub: "vs last month",
+          },
+          {
+            label: "Unique Customers",
+            value: Number(kpi.uniqueCustomers ?? 0).toLocaleString(),
+            icon: Users, color: "bg-violet-500",
+            badge: null,
+            sub: `${kpi.last30Days ?? 0} in last 30 days`,
+          },
+          {
+            label: "Avg. Order Value",
+            value: `S$${Number(kpi.avgOrderValue ?? 0).toLocaleString("en-SG")}`,
+            icon: Star, color: "bg-amber-500",
+            badge: null,
+            sub: "from completed bookings",
+          },
+        ].map(({ label, value, icon: Icon, color, badge, sub }) => (
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center", color)}>
+                <Icon size={18} className="text-white" />
+              </div>
+              {badge}
+            </div>
+            <p className="text-xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+            <p className="text-[11px] text-gray-400 mt-1">{sub}</p>
           </div>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {/* Bar chart */}
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Monthly Orders</h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: "8px", fontSize: "13px" }} />
-              <Bar dataKey="orders" fill="#6366f1" radius={[6, 6, 0, 0]} />
-            </BarChart>
+      {/* Quick stats strip */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Today",       value: kpi.todayOrders ?? 0, icon: Clock,         cls: "text-indigo-600 bg-indigo-50" },
+          { label: "Last 7 days", value: kpi.last7Days   ?? 0, icon: ShoppingCart,  cls: "text-emerald-600 bg-emerald-50" },
+          { label: "Last 30 days",value: kpi.last30Days  ?? 0, icon: TrendingUp,    cls: "text-violet-600 bg-violet-50" },
+        ].map(({ label, value, icon: Icon, cls }) => (
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
+            <div className={clsx("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", cls)}>
+              <Icon size={16} />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-900">{value}</p>
+              <p className="text-xs text-gray-400">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main chart + Status donut */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Revenue / Orders trend */}
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Performance Trend</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Last 12 months</p>
+            </div>
+            <div className="flex bg-gray-100 rounded-xl p-0.5 gap-0.5">
+              {(["revenue", "orders"] as const).map(t => (
+                <button key={t} onClick={() => setChartTab(t)}
+                  className={clsx("px-3 py-1.5 text-xs font-semibold rounded-lg transition capitalize",
+                    chartTab === t ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700")}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={240}>
+            <AreaChart data={monthly} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false}
+                tickFormatter={v => chartTab === "revenue" ? `S$${(v/1000).toFixed(0)}k` : String(v)} />
+              <Tooltip contentStyle={tooltipStyle}
+                formatter={(v: number) => chartTab === "revenue"
+                  ? [`S$${Number(v).toLocaleString("en-SG")}`, "Revenue"]
+                  : [v, "Bookings"]} />
+              <Area type="monotone" dataKey={chartTab} stroke="#6366f1" strokeWidth={2.5}
+                fill="url(#grad)" dot={false} activeDot={{ r: 5, fill: "#6366f1" }} />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Pie chart */}
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">Sales by Category</h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={70}
-                outerRadius={110}
-                paddingAngle={4}
-                dataKey="value"
-              >
-                {categoryData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+        {/* Booking status donut */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="mb-3">
+            <h2 className="text-sm font-bold text-gray-900">Booking Status</h2>
+            <p className="text-xs text-gray-400 mt-0.5">All time breakdown</p>
+          </div>
+          {donutData.length === 0 ? (
+            <div className="flex items-center justify-center h-40 text-sm text-gray-300">No data</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={donutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80}
+                    paddingAngle={3} dataKey="value">
+                    {donutData.map((d: any, i: number) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle}
+                    formatter={(v: number, _: string, props: any) => [
+                      `${v} (${totalBookings > 0 ? Math.round((v / totalBookings) * 100) : 0}%)`,
+                      props.payload.name
+                    ]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2 mt-2">
+                {donutData.map((d: any) => (
+                  <div key={d.name} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: d.color }} />
+                      <span className="text-gray-600">{d.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-800">{d.value}</span>
+                      <span className="text-gray-400">
+                        {totalBookings > 0 ? Math.round((d.value / totalBookings) * 100) : 0}%
+                      </span>
+                    </div>
+                  </div>
                 ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number) => [`${value}%`, ""]}
-                contentStyle={{ borderRadius: "8px", fontSize: "13px" }}
-              />
-              <Legend
-                formatter={(value) => <span style={{ fontSize: 12, color: "#6b7280" }}>{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Top Services + Top Cities */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+        {/* Top Services bar list */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Top Services</h2>
+              <p className="text-xs text-gray-400 mt-0.5">By number of bookings</p>
+            </div>
+          </div>
+          {topServices.length === 0 ? (
+            <p className="text-sm text-gray-300 text-center py-8">No service data</p>
+          ) : (
+            <div className="space-y-3">
+              {topServices.map((s: any, i: number) => {
+                const pct = Math.round((s.count / maxSvcCount) * 100);
+                return (
+                  <div key={s.name}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px] font-bold"
+                          style={{ backgroundColor: BAR_COLORS[i % BAR_COLORS.length] }}>
+                          {i + 1}
+                        </span>
+                        <span className="text-gray-700 font-medium truncate max-w-[160px]">{s.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-gray-400">{s.count} bookings</span>
+                        <span className="text-gray-500 font-semibold">S${Number(s.revenue).toLocaleString("en-SG")}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, backgroundColor: BAR_COLORS[i % BAR_COLORS.length] }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Top Cities */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Top Cities</h2>
+              <p className="text-xs text-gray-400 mt-0.5">By booking volume</p>
+            </div>
+          </div>
+          {topCities.length === 0 ? (
+            <p className="text-sm text-gray-300 text-center py-8">No city data</p>
+          ) : (
+            <div className="space-y-3">
+              {topCities.map((c: any, i: number) => {
+                const pct = Math.round((Number(c.bookings) / maxCityBookings) * 100);
+                return (
+                  <div key={c.city}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-md bg-indigo-50 flex items-center justify-center">
+                          <MapPin size={10} className="text-indigo-500" />
+                        </div>
+                        <span className="text-gray-700 font-medium">{c.city}</span>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-gray-400">{c.bookings} bookings</span>
+                        <span className="text-gray-500 font-semibold">S${Number(c.revenue).toLocaleString("en-SG")}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-indigo-400 transition-all duration-500"
+                        style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Monthly breakdown table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Monthly Breakdown</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Revenue, orders and completion rate by month</p>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                {["Month", "Bookings", "Completed", "Cancelled", "Revenue", "Completion Rate"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {monthly.map((row: any) => {
+                const total     = Number(row.orders    ?? 0);
+                const completed = Number(row.completed ?? 0);
+                const cancelled = Number(row.cancelled ?? 0);
+                const rate      = total > 0 ? Math.round((completed / total) * 100) : 0;
+                return (
+                  <tr key={`${row.yr}-${row.monthNum}`} className="hover:bg-gray-50/60 transition">
+                    <td className="px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">{row.month} {row.yr ?? ""}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{total}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                        <CheckCircle size={12} />{completed}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 text-red-500 font-medium">
+                        <XCircle size={12} />{cancelled}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">
+                      S${Number(row.revenue ?? 0).toLocaleString("en-SG")}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${rate}%` }} />
+                        </div>
+                        <span className="text-xs text-gray-500">{rate}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {monthly.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-400">No monthly data available.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 }

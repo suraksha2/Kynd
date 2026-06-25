@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import {
   getCityServices,
@@ -25,6 +24,7 @@ export async function POST(req: NextRequest) {
 
     // Basic validation
     const required: (keyof CreateCityServiceInput)[] = [
+      "cityId",
       "name",
       "category",
       "description",

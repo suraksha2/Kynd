@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import clsx from "clsx";
+import ModalPortal from "@/components/ModalPortal";
 import {
   CityRecord,
   CityService,
@@ -112,29 +113,33 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-gradient-to-br from-white via-indigo-50 to-emerald-50 rounded-3xl shadow-2xl w-full max-w-2xl mx-4 max-h-[92vh] flex flex-col border border-gray-100">
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 max-h-[92vh] flex flex-col border border-gray-100 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-emerald-50 rounded-t-3xl">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {service ? "Edit City Service" : "Add City Service"}
-          </h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">
+              {service ? "Edit City Service" : "Add City Service"}
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">City service details</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-gray-400 hover:text-indigo-600 hover:bg-indigo-100 transition shadow-sm"
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition"
             title="Close"
           >
-            <X size={20} />
+            <X size={16} className="text-gray-400" />
           </button>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">City <span className="text-red-500">*</span></label>
             <select
               className={clsx(
-                "w-full border rounded-xl px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm",
+                "w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300",
                 errors.cityId ? "border-red-400" : "border-gray-300"
               )}
               value={form.cityId ?? ""}
@@ -154,12 +159,12 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
           </div>
 
           {/* Name */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Service Name <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Service Name <span className="text-red-500">*</span></label>
               <input
                 className={clsx(
-                  "w-full border rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm",
+                  "w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300",
                   errors.name ? "border-red-400" : "border-gray-300"
                 )}
                 placeholder="e.g. Clean Water Supply"
@@ -170,9 +175,9 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Category <span className="text-red-500">*</span></label>
               <select
-                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300"
                 {...field("category")}
               >
                 {CATEGORIES.map((c) => (
@@ -182,9 +187,9 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
             </div>
             {/* Status Dropdown */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Status <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Status <span className="text-red-500">*</span></label>
               <select
-                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300"
                 {...field("status")}
               >
                 <option value="Active">Active</option>
@@ -197,11 +202,11 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Description <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Description <span className="text-red-500">*</span></label>
             <textarea
               rows={3}
               className={clsx(
-                "w-full border rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm resize-none",
+                "w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all resize-none border-gray-300",
                 errors.description ? "border-red-400" : "border-gray-300"
               )}
               placeholder="Describe the city service..."
@@ -210,13 +215,13 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
             {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Provider */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Provider <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Provider <span className="text-red-500">*</span></label>
               <input
                 className={clsx(
-                  "w-full border rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm",
+                  "w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300",
                   errors.provider ? "border-red-400" : "border-gray-300"
                 )}
                 placeholder="Provider name"
@@ -226,14 +231,14 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Contact Email */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Email <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Contact Email <span className="text-red-500">*</span></label>
               <input
                 type="email"
                 className={clsx(
-                  "w-full border rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm",
+                  "w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300",
                   errors.contactEmail ? "border-red-400" : "border-gray-300"
                 )}
                 placeholder="contact@city.gov"
@@ -244,11 +249,11 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
 
             {/* Contact Phone */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Phone <span className="text-red-500">*</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Contact Phone <span className="text-red-500">*</span></label>
               <input
                 type="tel"
                 className={clsx(
-                  "w-full border rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm",
+                  "w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300",
                   errors.contactPhone ? "border-red-400" : "border-gray-300"
                 )}
                 placeholder="+1-800-555-0000"
@@ -260,23 +265,24 @@ export default function ServiceFormModal({ open, service, cities, citiesLoading 
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 px-8 py-5 border-t border-gray-200 bg-gradient-to-r from-indigo-50 to-emerald-50 rounded-b-3xl">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 text-base font-semibold text-gray-600 hover:text-white hover:bg-gray-400 rounded-xl transition shadow-sm border border-gray-300"
+            className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="px-6 py-2 text-base font-bold bg-gradient-to-r from-indigo-600 to-emerald-500 text-white rounded-xl shadow hover:from-indigo-700 hover:to-emerald-600 hover:shadow-lg transition disabled:opacity-60"
+            className="px-5 py-2 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm shadow-indigo-200 transition disabled:opacity-60"
           >
             {saving ? "Saving…" : service ? "Update Service" : "Add Service"}
           </button>
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

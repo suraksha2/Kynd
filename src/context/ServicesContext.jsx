@@ -31,7 +31,9 @@ export function ServicesProvider({ children }) {
           img: service.image || '/images/hourly-bookings.webp',
           price: parseFloat(service.price),
           pricingFrom: `S$${parseFloat(service.price).toFixed(2)}`,
-          duration: 'Variable',
+          duration: service.duration || 'Variable',
+          rating: service.rating || 0,
+          reviewCount: service.review_count || 0,
           bullets: ['Professional service', 'Quality guaranteed', 'Trusted providers']
         }))
         return mappedServices

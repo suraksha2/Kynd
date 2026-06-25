@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ChevronDown, Menu, X, ShoppingBag, User, LogOut } from 'lucide-react'
-import { cities } from '../data/cities'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useServices } from '../context/ServicesContext'
@@ -156,7 +155,7 @@ const ServicesMenu = ({ services }) => (
   </div>
 )
 
-const CitiesMenu = () => (
+const CitiesMenu = ({ cities }) => (
   <div>
     <div className="grid grid-cols-3 gap-x-6 gap-y-2">
       {cities.map(c => (
@@ -181,10 +180,32 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mServices, setMServices] = useState(false)
   const [mCities, setMCities] = useState(false)
+  const [cities, setCities] = useState([])
   const { services } = useServices()
   const location = useLocation()
 
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/cities')
+        if (!response.ok) throw new Error('Failed to fetch cities')
+        const result = await response.json()
+        const data = result.data || []
+        const transformedCities = data.map(city => ({
+          id: city.id,
+          slug: city.cityName.toLowerCase().replace(/\s+/g, '-'),
+          name: city.cityName,
+        }))
+        setCities(transformedCities)
+      } catch (error) {
+        console.error('Error fetching cities:', error)
+      }
+    }
+
+    fetchCities()
+  }, [])
 
   return (
     <header className="app-header">
@@ -196,7 +217,7 @@ export default function Header() {
               Why us
             </NavLink>
             <NavDropdown label="Services"><ServicesMenu services={services} /></NavDropdown>
-            <NavDropdown label="Cities"><CitiesMenu /></NavDropdown>
+            <NavDropdown label="Cities"><CitiesMenu cities={cities} /></NavDropdown>
           </div>
 
           {/* Logo */}

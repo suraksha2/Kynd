@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, Plus, Trash2 } from "lucide-react";
 import clsx from "clsx";
+import ModalPortal from "@/components/ModalPortal";
 import { CityRecord, CreateCityInput } from "@/lib/types";
 
 interface AreaPincode {
@@ -18,6 +19,18 @@ const EMPTY_FORM: CityFormState = {
   serviceCategoryId: "",
 };
 
+// Parse serviceCategoryId which may be a JSON array of ids, a single id, or empty.
+function parseCategoryIds(value?: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.map((v) => String(v));
+  } catch {
+    // not JSON; treat as a single id
+  }
+  return [String(value)];
+}
+
 interface Props {
   open: boolean;
   city?: CityRecord | null;
@@ -28,6 +41,7 @@ interface Props {
 export default function CityFormModal({ open, city, onClose, onSave }: Props) {
   const [form, setForm] = useState<CityFormState>(EMPTY_FORM);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [areas, setAreas] = useState<AreaPincode[]>([]);
   const [newArea, setNewArea] = useState({ areaName: "", pinCode: "" });
   
@@ -49,6 +63,7 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
         pinCode: city.pinCode, 
         serviceCategoryId: city.serviceCategoryId ? String(city.serviceCategoryId) : "" 
       });
+      setSelectedCategoryIds(parseCategoryIds(city.serviceCategoryId));
       try {
         const parsed = JSON.parse(city.pinCode);
         if (Array.isArray(parsed)) {
@@ -62,9 +77,16 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
     } else {
       setForm(EMPTY_FORM);
       setAreas([]);
+      setSelectedCategoryIds([]);
     }
     setErrors({});
   }, [city, open]);
+
+  function toggleCategory(id: string) {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  }
 
   function validate() {
     const nextErrors: Partial<Record<keyof CreateCityInput, string>> = {};
@@ -101,7 +123,7 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
       await onSave({
         cityName: form.cityName.trim(),
         pinCode: pinCodeJson,
-        serviceCategoryId: form.serviceCategoryId,
+        serviceCategoryId: selectedCategoryIds.length > 0 ? JSON.stringify(selectedCategoryIds) : "",
       });
       onClose();
     } finally {
@@ -114,23 +136,25 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-3xl bg-gradient-to-br from-white via-indigo-50 to-emerald-50 shadow-2xl border border-gray-100 overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 md:px-8 py-4 md:py-5 bg-gradient-to-r from-indigo-50 to-emerald-50 rounded-t-3xl shrink-0">
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">
-            {city ? "Edit City" : "Add City"}
-          </h2>
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-xl border border-gray-100 overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">{city ? "Edit City" : "Add City"}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">City details and service areas</p>
+          </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-100 transition shadow-sm"
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition"
           >
-            <X size={20} />
+            <X size={16} className="text-gray-400" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 px-4 md:px-8 py-4 md:py-6">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">City Name <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">City Name <span className="text-red-500">*</span></label>
             <input
               value={form.cityName}
               onChange={(e) => {
@@ -140,7 +164,7 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
                 }
               }}
               className={clsx(
-                "w-full rounded-xl border px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm",
+                "w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all",
                 errors.cityName ? "border-red-400" : "border-gray-300"
               )}
               placeholder="Enter city name"
@@ -149,8 +173,8 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-700">Areas & Pincodes <span className="text-red-500">*</span></label>
-            
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Areas & Pincodes <span className="text-red-500">*</span></label>
+
             <div className="space-y-2 mb-3">
               {areas.map((area, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
@@ -176,13 +200,13 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
               <input
                 value={newArea.areaName}
                 onChange={(e) => setNewArea({ ...newArea, areaName: e.target.value })}
-                className="flex-1 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm border-gray-300"
+                className="flex-1 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300"
                 placeholder="Area name (e.g., Indiranagar)"
               />
               <input
                 value={newArea.pinCode}
                 onChange={(e) => setNewArea({ ...newArea, pinCode: e.target.value })}
-                className="w-full sm:w-28 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm border-gray-300"
+                className="w-full sm:w-28 rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all border-gray-300"
                 placeholder="Pincode"
               />
               <button
@@ -197,31 +221,52 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Service Category</label>
-            <select
-              value={form.serviceCategoryId || ""}
-              onChange={(e) => setForm((prev) => ({ ...prev, serviceCategoryId: e.target.value }))}
-              className="w-full rounded-xl border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all shadow-sm border-gray-300"
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+              Services{selectedCategoryIds.length > 0 && (
+                <span className="ml-1 text-gray-400 font-normal">({selectedCategoryIds.length} selected)</span>
+              )}
+            </label>
+            {categories.length === 0 ? (
+              <p className="text-sm text-gray-400 italic">No service categories available</p>
+            ) : (
+              <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-300 p-2 space-y-1">
+                {categories.map((cat) => {
+                  const checked = selectedCategoryIds.includes(String(cat.id));
+                  return (
+                    <label
+                      key={cat.id}
+                      className={clsx(
+                        "flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition",
+                        checked ? "bg-indigo-50" : "hover:bg-gray-50"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCategory(String(cat.id))}
+                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">{cat.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            <p className="mt-1 text-xs text-gray-400">Select one or more services for this city.</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-4 pt-4 shrink-0">
+          <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-5 py-2 text-sm md:text-base font-semibold text-gray-600 hover:text-white hover:bg-gray-400 rounded-xl transition shadow-sm border border-gray-300"
+              className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="w-full sm:w-auto px-6 py-2 text-sm md:text-base font-bold bg-gradient-to-r from-indigo-600 to-emerald-500 text-white rounded-xl shadow hover:from-indigo-700 hover:to-emerald-600 hover:shadow-lg transition disabled:opacity-60"
+              className="px-5 py-2 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm shadow-indigo-200 transition disabled:opacity-60"
             >
               {saving ? "Saving..." : "Submit"}
             </button>
@@ -229,5 +274,6 @@ export default function CityFormModal({ open, city, onClose, onSave }: Props) {
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

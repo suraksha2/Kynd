@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const ids = searchParams.get('ids');
     const slugs = searchParams.get('slugs');
 
-    let query = `SELECT id, name, category, price, availability, status, image FROM services`;
+    let query = `SELECT id, name, category, price, availability, status, image, duration, rating, review_count FROM services`;
     const params: any[] = [];
 
     if (ids) {

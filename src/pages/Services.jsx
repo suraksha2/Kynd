@@ -18,7 +18,7 @@ export default function Services() {
             img: service.image || '/images/hourly-bookings.webp',
             price: parseFloat(service.price),
             pricingFrom: `S$${parseFloat(service.price).toFixed(2)}`,
-            duration: 'Variable'
+            duration: service.duration || 'Variable'
           }))
           setServices(mappedServices)
         }

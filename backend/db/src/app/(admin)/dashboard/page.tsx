@@ -5,7 +5,10 @@ import StatCard from "@/components/StatCard";
 import RevenueChart from "@/components/RevenueChart";
 import RecentOrders from "@/components/RecentOrders";
 import TopServices from "@/components/TopServices";
-import { Users, ShoppingCart, DollarSign, TrendingUp, Clock, CheckCircle, AlertCircle, Zap } from "lucide-react";
+import {
+  Users, ShoppingCart, DollarSign, TrendingUp,
+  Clock, CheckCircle, AlertCircle, RefreshCw,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -20,29 +23,31 @@ export default function DashboardPage() {
     completedTotal: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchStats();
   }, []);
 
-  async function fetchStats() {
+  async function fetchStats(silent = false) {
+    if (silent) setRefreshing(true);
+    else setLoading(true);
     try {
       const res = await fetch("/api/dashboard/stats");
       const json = await res.json();
-      if (json.data) {
-        setStats(json.data);
-      }
+      if (json.data) setStats(json.data);
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
   const mainStats = [
     {
       title: "Total Revenue",
-      value: `$${stats.totalRevenue.toLocaleString()}`,
+      value: `S$${stats.totalRevenue.toLocaleString()}`,
       change: "12.5%",
       positive: true,
       icon: DollarSign,
@@ -70,116 +75,89 @@ export default function DashboardPage() {
     {
       title: "Growth Rate",
       value: `${stats.growthRate.toFixed(1)}%`,
-      change: "4.6%",
+      change: `${Math.abs(stats.growthRate).toFixed(1)}%`,
       positive: stats.growthRate >= 0,
       icon: TrendingUp,
-      color: "bg-pink-500",
+      color: "bg-violet-500",
       href: "/analytics",
     },
   ];
 
-  const orderStatsCards = [
-    {
-      title: "Today Orders",
-      value: stats.todayOrders.toString(),
-      change: "0%",
-      positive: true,
-      icon: ShoppingCart,
-      color: "bg-blue-500",
-      href: "/orders",
-    },
-    {
-      title: "Today Reprocessing",
-      value: stats.reprocessingToday.toString(),
-      change: "0%",
-      positive: true,
-      icon: Zap,
-      color: "bg-purple-500",
-      href: "/orders",
-    },
-    {
-      title: "Today Processing",
-      value: stats.processingToday.toString(),
-      change: "0%",
-      positive: true,
-      icon: Clock,
-      color: "bg-amber-500",
-      href: "/orders",
-    },
-    {
-      title: "Today Pending",
-      value: stats.pendingToday.toString(),
-      change: "0%",
-      positive: true,
-      icon: AlertCircle,
-      color: "bg-red-500",
-      href: "/orders",
-    },
-    {
-      title: "Completed Orders",
-      value: stats.completedTotal.toString(),
-      change: "0%",
-      positive: true,
-      icon: CheckCircle,
-      color: "bg-green-500",
-      href: "/orders",
-    },
+  const todayCards = [
+    { title: "Today's Bookings", value: stats.todayOrders.toString(),     icon: ShoppingCart, color: "bg-blue-500",  href: "/orders" },
+    { title: "Upcoming",         value: stats.processingToday.toString(), icon: Clock,        color: "bg-amber-500", href: "/orders" },
+    { title: "Cancelled Today",  value: stats.pendingToday.toString(),    icon: AlertCircle,  color: "bg-rose-500",  href: "/orders" },
+    { title: "All Completed",    value: stats.completedTotal.toString(),  icon: CheckCircle,  color: "bg-green-500", href: "/orders" },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-1.5">
+            {[0,1,2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <p className="text-sm text-gray-400">Loading dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50 py-10 px-2 sm:px-8">
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-gray-500 text-lg">Loading dashboard...</div>
+    <div className="space-y-6 pb-6">
+
+      {/* Page title row */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Overview</h2>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </p>
         </div>
-      ) : (
-        <>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-indigo-100 rounded-2xl shadow-md">
-            <TrendingUp size={32} className="text-indigo-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Urban Service Dashboard</h1>
-            <p className="text-lg text-gray-500 mt-1">Get a complete overview of your business performance and growth</p>
-          </div>
-        </div>
+        <button
+          onClick={() => fetchStats(true)}
+          disabled={refreshing}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 bg-white border border-gray-200 hover:border-gray-300 px-3 py-2 rounded-xl transition shadow-sm disabled:opacity-50"
+        >
+          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+          Refresh
+        </button>
       </div>
 
-      {/* Main Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+      {/* Main KPI cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {mainStats.map((stat) => (
-          <div className="transition-transform hover:scale-[1.03]">
-            <StatCard key={stat.title} {...stat} />
-          </div>
+          <StatCard key={stat.title} {...stat} />
         ))}
       </div>
 
-      {/* Order Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        {orderStatsCards.map((stat) => (
-          <div className="transition-transform hover:scale-[1.03]">
-            <StatCard key={stat.title} {...stat} />
-          </div>
-        ))}
+      {/* Today's snapshot */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Today's Activity</p>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {todayCards.map((stat) => (
+            <StatCard key={stat.title} {...stat} change="" positive={true} />
+          ))}
+        </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-        <div className="xl:col-span-2 bg-white/80 rounded-3xl shadow-lg p-6 border border-gray-100">
+      {/* Charts row */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <RevenueChart />
         </div>
-        <div className="bg-white/80 rounded-3xl shadow-lg p-6 border border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <TopServices />
         </div>
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white/80 rounded-3xl shadow-lg p-6 border border-gray-100">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <RecentOrders />
       </div>
-      </>
-      )}
+
     </div>
   );
 }

@@ -18,14 +18,37 @@ export async function GET() {
         b.contact_address as address,
         b.items,
         b.schedule,
-        b.payment
+        b.payment,
+        b.provider_id,
+        b.assigned_at,
+        sp.name as providerName,
+        sp.mobile as providerMobile,
+        sp.city as providerCity,
+        sp.rating as providerRating,
+        sp.total_jobs as providerTotalJobs
       FROM bookings b
+      LEFT JOIN service_providers sp ON b.provider_id = sp.id
       ORDER BY b.placed_at DESC`
     );
     return NextResponse.json({ data: rows }, { status: 200 });
   } catch (err) {
     console.error("[GET /api/orders]", err);
     return NextResponse.json({ error: "Failed to fetch orders." }, { status: 500 });
+  }
+}
+
+// Update an existing booking's status
+export async function PATCH(req: NextRequest) {
+  try {
+    const { id, status } = await req.json();
+    if (!id || !status) {
+      return NextResponse.json({ error: "id and status are required." }, { status: 400 });
+    }
+    await pool.query(`UPDATE bookings SET status = ? WHERE id = ?`, [status, id]);
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (err) {
+    console.error("[PATCH /api/orders]", err);
+    return NextResponse.json({ error: "Failed to update order." }, { status: 500 });
   }
 }
 

@@ -80,16 +80,43 @@ const Localities = ({ city }) => (
 )
 
 /* ---------- Services available in this city ---------- */
-const ServicesInCity = () => {
+const parseCategoryIds = (value) => {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed)) return parsed.map(String)
+  } catch {
+    // not JSON; treat as a single id
+  }
+  return [String(value)]
+}
+
+const ServicesInCity = ({ city }) => {
   const [services, setServices] = useState([])
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/services')
-        const result = await response.json()
-        if (result.data) {
-          const mappedServices = result.data.map(service => ({
+        const [servicesRes, catRes] = await Promise.all([
+          fetch('http://localhost:3001/api/services'),
+          fetch('http://localhost:3001/api/service-categories'),
+        ])
+        const servicesResult = await servicesRes.json()
+        const catResult = await catRes.json()
+        const allServices = servicesResult.data || []
+        const categories = catResult.data || []
+
+        // City offers only the service categories listed in serviceCategoryId.
+        const cityCategoryIds = parseCategoryIds(city.serviceCategoryId)
+        const allowedCategoryNames = categories
+          .filter(c => cityCategoryIds.includes(String(c.id)))
+          .map(c => (c.name || '').toLowerCase())
+
+        const mappedServices = allServices
+          .filter(service =>
+            allowedCategoryNames.includes((service.category || '').toLowerCase())
+          )
+          .map(service => ({
             id: service.id,
             slug: service.name.toLowerCase().replace(/\s+/g, '-'),
             name: service.name,
@@ -97,14 +124,13 @@ const ServicesInCity = () => {
             price: parseFloat(service.price),
             pricingFrom: `S$${parseFloat(service.price).toFixed(2)}`
           }))
-          setServices(mappedServices)
-        }
+        setServices(mappedServices)
       } catch (error) {
         console.error('Failed to fetch services:', error)
       }
     }
     fetchServices()
-  }, [])
+  }, [city])
 
   return (
     <section className="py-14">
@@ -112,27 +138,33 @@ const ServicesInCity = () => {
         <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900 leading-tight">
           Services available
         </h2>
-        <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
-          {services.map(s => (
-            <Link
-              key={s.id}
-              to={`/services/${s.slug}`}
-              className="group rounded-2xl bg-neutral-50 p-3 md:p-4 hover:shadow-soft hover:bg-white transition flex flex-col items-center text-center"
-            >
-              <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100">
-                <img
-                  src={s.img}
-                  alt={s.name}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
-                />
-              </div>
-              <div className="mt-2 text-[11px] md:text-xs font-medium text-neutral-700 leading-snug">
-                {s.name}
-              </div>
-            </Link>
-          ))}
-        </div>
+        {services.length === 0 ? (
+          <p className="mt-6 text-neutral-500">
+            No services are available in {city.name} yet. Please check back later.
+          </p>
+        ) : (
+          <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4">
+            {services.map(s => (
+              <Link
+                key={s.id}
+                to={`/services/${s.slug}`}
+                className="group rounded-2xl bg-neutral-50 p-3 md:p-4 hover:shadow-soft hover:bg-white transition flex flex-col items-center text-center"
+              >
+                <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100">
+                  <img
+                    src={s.img}
+                    alt={s.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
+                  />
+                </div>
+                <div className="mt-2 text-[11px] md:text-xs font-medium text-neutral-700 leading-snug">
+                  {s.name}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -195,7 +227,7 @@ export default function CityDetail() {
     <div>
       <CityHero city={city} />
       <Localities city={city} />
-      <ServicesInCity />
+      <ServicesInCity city={city} />
       <DownloadCta />
     </div>
   )

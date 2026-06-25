@@ -1,29 +1,38 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createCity, getCities } from "@/lib/cities-db";
+import { getCityAreas } from "@/lib/city-areas-db";
 import { CreateCityInput } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   try {
     const cities = await getCities();
-    // Parse areas from pinCode field for each city
-    const citiesWithAreas = cities.map((city: any) => {
-      let areas: string[] = [];
-      try {
-        const parsed = JSON.parse(city.pinCode);
-        if (Array.isArray(parsed)) {
-          areas = parsed.map((a: any) => a.areaName);
-        } else {
-          areas = [city.pinCode];
+    // Fetch areas from city_areas table for each city, falling back to pinCode JSON
+    const citiesWithAreas = await Promise.all(
+      cities.map(async (city: any) => {
+        const areas = await getCityAreas(city.id);
+        const areaNames = areas.map((a: any) => a.areaName);
+
+        let fallbackCount = 0;
+        if (areaNames.length === 0 && city.pinCode) {
+          try {
+            const parsed = JSON.parse(city.pinCode);
+            if (Array.isArray(parsed)) {
+              fallbackCount = parsed.length;
+            }
+          } catch {
+            // pinCode is not valid JSON; treat as a single area
+            fallbackCount = city.pinCode ? 1 : 0;
+          }
         }
-      } catch {
-        areas = [city.pinCode];
-      }
-      return {
-        ...city,
-        areas
-      };
-    });
+
+        return {
+          ...city,
+          areas: areaNames.length > 0 ? areaNames : undefined,
+          areaCount: areaNames.length > 0 ? areaNames.length : fallbackCount
+        };
+      })
+    );
     return NextResponse.json({ data: citiesWithAreas }, { status: 200 });
   } catch (err) {
     console.error("[GET /api/cities]", err);

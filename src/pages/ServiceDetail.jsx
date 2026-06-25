@@ -5,7 +5,6 @@ import CitiesGrid from '../components/CitiesGrid'
 import { useCart } from '../context/CartContext'
 import { useServices } from '../context/ServicesContext'
 import { DownloadCta } from './Home'
-import { cities } from '../data/cities'
 
 const BookingCard = ({ svc }) => {
   const { addItem } = useCart()
@@ -67,7 +66,7 @@ const ServiceHero = ({ svc }) => (
           <div className="mt-5 flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1 text-xs text-neutral-500">
               <span className="text-amber-400">★★★★★</span>
-              <span>4.9 from <strong className="text-neutral-700">15,000+</strong> homes</span>
+              <span>{svc.rating || 4.9} from <strong className="text-neutral-700">{svc.reviewCount ? `${svc.reviewCount.toLocaleString()}+` : '15,000+'}</strong> homes</span>
             </div>
           </div>
           <div className="mt-5 w-full md:w-[260px] aspect-[4/3] rounded-3xl overflow-hidden bg-neutral-100 shadow-soft md:hidden">
@@ -178,18 +177,53 @@ export default function ServiceDetail() {
   const [availableCities, setAvailableCities] = useState([])
 
   useEffect(() => {
+    const parseCategoryIds = (value) => {
+      if (!value) return []
+      try {
+        const parsed = JSON.parse(value)
+        if (Array.isArray(parsed)) return parsed.map(String)
+      } catch {
+        // not JSON; treat as a single id
+      }
+      return [String(value)]
+    }
+
     const fetchCitiesForService = async () => {
       const svc = services.find(s => s.slug === slug)
-      if (svc) {
-        try {
-          const response = await fetch(`http://localhost:3001/api/city-services/by-service/${svc.id}`)
-          const result = await response.json()
-          if (result.data) {
-            setAvailableCities(result.data)
-          }
-        } catch (error) {
-          console.error('Failed to fetch cities for service:', error)
+      if (!svc) return
+      try {
+        const [catRes, cityRes] = await Promise.all([
+          fetch('http://localhost:3001/api/service-categories'),
+          fetch('http://localhost:3001/api/cities'),
+        ])
+        const catJson = await catRes.json()
+        const cityJson = await cityRes.json()
+        const categories = catJson.data || []
+        const allCities = cityJson.data || []
+
+        // The service's category (svc.short) maps to a service_categories row.
+        const matchedCategory = categories.find(
+          c => (c.name || '').toLowerCase() === (svc.short || '').toLowerCase()
+        )
+        if (!matchedCategory) {
+          setAvailableCities([])
+          return
         }
+        const categoryId = String(matchedCategory.id)
+
+        // A city offers the service if its serviceCategoryId list includes it.
+        const matchingCities = allCities
+          .filter(city => parseCategoryIds(city.serviceCategoryId).includes(categoryId))
+          .map(city => ({
+            id: city.id,
+            slug: city.cityName.toLowerCase().replace(/\s+/g, '-'),
+            name: city.cityName,
+            img: undefined,
+            areas: city.areas || [],
+          }))
+        setAvailableCities(matchingCities)
+      } catch (error) {
+        console.error('Failed to fetch cities for service:', error)
       }
     }
     if (services.length > 0) {
@@ -208,10 +242,7 @@ export default function ServiceDetail() {
   const svc = services.find(s => s.slug === slug)
   if (!svc) return <Navigate to="/services" replace />
 
-  // Map city IDs from backend to actual city objects from static data
-  const filteredCities = availableCities.length > 0
-    ? cities.filter(city => availableCities.some(ac => ac.cityId === city.id.toString()))
-    : []
+  const filteredCities = availableCities
 
   return (
     <div>

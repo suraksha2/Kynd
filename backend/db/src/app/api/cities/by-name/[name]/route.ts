@@ -37,6 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: { name: string
         tagline: `Professional home services in ${city.cityName}. Book trained, background-verified Pros for cleaning, laundry, kitchen and bathroom upkeep.`,
         img: `/images/cities/${city.cityName.toLowerCase()}.webp`,
         areas: areas,
+        serviceCategoryId: city.serviceCategoryId,
       }
     }, { status: 200 });
   } catch (err) {

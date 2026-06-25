@@ -1,77 +1,96 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, MoreVertical, Eye } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Search, Eye, X, CheckCircle, XCircle, CalendarClock,
+  ShoppingCart, DollarSign, Clock, Ban,
+  MapPin, Phone, Package, User, CreditCard, Calendar,
+} from "lucide-react";
 import clsx from "clsx";
 
-const statusStyles: Record<string, string> = {
-  Completed: "bg-green-100 text-green-700",
-  Confirmed: "bg-indigo-100 text-indigo-700",
-  Pending: "bg-yellow-100 text-yellow-700",
-  Upcoming: "bg-blue-100 text-blue-700",
-  Cancelled: "bg-red-100 text-red-600",
+const statusCfg: Record<string, { cls: string; dot: string; label: string }> = {
+  Upcoming:  { cls: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",        dot: "bg-blue-500",    label: "Upcoming"  },
+  Completed: { cls: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",dot: "bg-emerald-500", label: "Completed" },
+  Cancelled: { cls: "bg-red-50 text-red-600 ring-1 ring-red-200",           dot: "bg-red-500",     label: "Cancelled" },
 };
 
-const tabs = ["All Bookings", "Upcoming", "Completed", "Cancelled"];
-const filterStatuses = ["All Status", "Completed", "Confirmed", "Pending", "Upcoming", "Cancelled"];
+const avatarColors = [
+  "bg-indigo-500","bg-emerald-500","bg-amber-500","bg-rose-500","bg-sky-500","bg-violet-500",
+];
+
+function getInitials(name: string) {
+  return (name || "?").trim().split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
+const TABS = [
+  { label: "All",       filter: null },
+  { label: "Upcoming",  filter: "Upcoming" },
+  { label: "Completed", filter: "Completed" },
+  { label: "Cancelled", filter: "Cancelled" },
+];
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState(0);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [serviceFilter, setServiceFilter] = useState("All Services");
-  const [loading, setLoading] = useState(true);
-  const [filterServices, setFilterServices] = useState<string[]>(["All Services"]);
+  const [bookings, setBookings]         = useState<any[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [activeTab, setActiveTab]       = useState(0);
+  const [search, setSearch]             = useState("");
+  const [selected, setSelected]         = useState<any | null>(null);
+  const [menuOpenId, setMenuOpenId]     = useState<string | null>(null);
+  const [updatingId, setUpdatingId]     = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchBookings();
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpenId(null);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   async function fetchBookings() {
     try {
-      const res = await fetch("/api/orders");
+      const res  = await fetch("/api/orders");
       const json = await res.json();
       if (json.data) {
-        // Map database fields to component format
-        const mappedBookings = json.data.map((order: any) => {
-          // Parse items JSON to get service information
-          let serviceName = "Unknown";
-          let serviceCategory = "General";
+        const mapped = json.data.map((order: any) => {
+          let serviceNames = "—";
+          let allItems: any[] = [];
           try {
-            if (order.items) {
-              const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-              if (Array.isArray(items) && items.length > 0) {
-                serviceName = items[0].name || "Unknown";
-                serviceCategory = items[0].category || "General";
-              }
+            const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
+            if (Array.isArray(items) && items.length > 0) {
+              allItems = items;
+              serviceNames = items.map((it: any) => it.name || it.serviceName || "Service").join(", ");
             }
-          } catch (e) {
-            console.error("Failed to parse items", e);
-          }
-
-          // Format status to match expected values
-          let status = order.status || "Pending";
-          if (status === 'upcoming') status = "Upcoming";
-          else if (status === 'completed') status = "Completed";
-          else if (status === 'cancelled') status = "Cancelled";
-
+          } catch {}
+          let status = order.status || "upcoming";
+          if (status === "upcoming")  status = "Upcoming";
+          if (status === "completed") status = "Completed";
+          if (status === "cancelled") status = "Cancelled";
           return {
-            id: `#BK${order.booking_id || order.id}`,
-            consumer: { name: order.clientName || "Unknown", phone: order.clientMobile || "N/A" },
-            service: { main: serviceName, sub: serviceCategory },
-            partner: { name: "Service Provider", avatar: "https://randomuser.me/api/portraits/men/32.jpg", rating: 4.5 },
-            date: order.date ? new Date(order.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : "N/A",
-            address: order.address || `${order.city || "N/A"}`,
-            amount: order.amount || 0,
-            status: status,
+            id:       order.booking_id ? `#${order.booking_id}` : `#ORD-${order.id}`,
+            dbId:     order.id,
+            customer: order.clientName  || order.contact_name  || "Unknown",
+            phone:    order.clientMobile || order.contact_phone || "—",
+            city:     order.city || order.contact_city || "—",
+            address:  order.address || order.contact_address || "—",
+            service:  serviceNames,
+            items:    allItems,
+            payment:  order.payment || "—",
+            schedule: order.schedule || "—",
+            provider: order.providerName || "Unassigned",
+            providerRating: order.providerRating || null,
+            amount:   Number(order.amount || order.total || 0),
+            status,
+            date: (order.date || order.placed_at)
+              ? new Date(order.date || order.placed_at).toLocaleString("en-IN", {
+                  month: "short", day: "numeric", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })
+              : "—",
           };
         });
-        setBookings(mappedBookings);
-
-        // Extract unique services for filter
-        const uniqueServices = ["All Services", ...new Set(mappedBookings.map((b: any) => b.service.main).filter(Boolean))];
-        setFilterServices(uniqueServices);
+        setBookings(mapped);
       }
     } catch (err) {
       console.error("Failed to fetch bookings", err);
@@ -80,190 +99,372 @@ export default function BookingsPage() {
     }
   }
 
-  const filtered = bookings.filter((b) => {
-    const matchSearch =
-      b.id.toLowerCase().includes(search.toLowerCase()) ||
-      b.consumer.name.toLowerCase().includes(search.toLowerCase()) ||
-      b.consumer.phone.includes(search) ||
-      b.service.main.toLowerCase().includes(search.toLowerCase()) ||
-      b.service.sub.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "All Status" || b.status === statusFilter;
-    const matchService = serviceFilter === "All Services" || b.service.main === serviceFilter;
-    // Tab filter
-    let matchTab = true;
-    if (activeTab === 1) matchTab = b.status === "Upcoming";
-    else if (activeTab === 2) matchTab = b.status === "Completed";
-    else if (activeTab === 3) matchTab = b.status === "Cancelled";
-    return matchSearch && matchStatus && matchService && matchTab;
-  });
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="text-gray-500 text-sm">Loading bookings...</div>
-      </div>
-    );
+  async function updateStatus(booking: any, newStatus: string) {
+    setMenuOpenId(null);
+    setUpdatingId(booking.id);
+    try {
+      const res = await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: booking.dbId, status: newStatus.toLowerCase() }),
+      });
+      if (!res.ok) throw new Error();
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: newStatus } : b));
+      setSelected((prev: any) => prev?.id === booking.id ? { ...prev, status: newStatus } : prev);
+    } catch {
+      alert("Could not update booking status. Please try again.");
+    } finally {
+      setUpdatingId(null);
+    }
   }
 
+  const tabFilter = TABS[activeTab].filter;
+  const filtered = bookings.filter((b) => {
+    const q = search.toLowerCase();
+    const matchSearch =
+      b.id.toLowerCase().includes(q) ||
+      b.customer.toLowerCase().includes(q) ||
+      b.phone.includes(q) ||
+      b.service.toLowerCase().includes(q) ||
+      b.city.toLowerCase().includes(q);
+    const matchTab = !tabFilter || b.status === tabFilter;
+    return matchSearch && matchTab;
+  });
+
+  // Summary counts
+  const counts = {
+    total:     bookings.length,
+    upcoming:  bookings.filter(b => b.status === "Upcoming").length,
+    completed: bookings.filter(b => b.status === "Completed").length,
+    cancelled: bookings.filter(b => b.status === "Cancelled").length,
+    revenue:   bookings.filter(b => b.status === "Completed").reduce((s, b) => s + b.amount, 0),
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex gap-6 border-b border-gray-200">
-        {tabs.map((tab, i) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(i)}
-            className={clsx(
-              "pb-3 px-1 text-base font-semibold border-b-2 transition",
-              activeTab === i
-                ? "border-indigo-600 text-indigo-700"
-                : "border-transparent text-gray-500 hover:text-indigo-600"
-            )}
-          >
-            {tab}
-          </button>
+    <div className="relative space-y-5 pb-6">
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {[
+          { label: "Total Bookings", value: counts.total.toLocaleString(),          icon: ShoppingCart, color: "bg-indigo-500"  },
+          { label: "Upcoming",       value: counts.upcoming.toLocaleString(),        icon: Clock,        color: "bg-blue-500"   },
+          { label: "Completed",      value: counts.completed.toLocaleString(),       icon: CheckCircle,  color: "bg-emerald-500"},
+          { label: "Revenue",        value: `S$${counts.revenue.toLocaleString()}`,   icon: DollarSign,  color: "bg-violet-500" },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-start justify-between mb-3">
+              <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center", color)}>
+                <Icon size={18} className="text-white" />
+              </div>
+              {label === "Cancelled" && counts.cancelled > 0 && (
+                <span className="text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-lg">{counts.cancelled}</span>
+              )}
+            </div>
+            <p className="text-xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+          </div>
         ))}
       </div>
 
-      {/* Filters and search */}
-      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-        <div className="flex flex-wrap gap-3 items-center">
-          <input
-            type="text"
-            placeholder="Search by Booking ID, Consumer or Service"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 text-base border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-80 shadow-sm bg-white"
-            style={{ backgroundImage: `url('data:image/svg+xml;utf8,<svg fill=\\'gray\\' height=\\'16\\' viewBox=\\'0 0 24 24\\' width=\\'16\\' xmlns=\\'http://www.w3.org/2000/svg\\'><path d=\\'M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z\\'/></svg>')`, backgroundRepeat: 'no-repeat', backgroundPosition: '10px center' }}
-          />
-          <select
-            className="border border-gray-200 rounded-xl px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm bg-white"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            {filterStatuses.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <select
-            className="border border-gray-200 rounded-xl px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm bg-white"
-            value={serviceFilter}
-            onChange={(e) => setServiceFilter(e.target.value)}
-          >
-            {filterServices.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow transition">Export</button>
+      {/* Tabs + Search toolbar */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Tab strip */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-4">
+          <div className="flex">
+            {TABS.map((tab, i) => {
+              const count = i === 0 ? counts.total
+                : i === 1 ? counts.upcoming
+                : i === 2 ? counts.completed
+                : counts.cancelled;
+              return (
+                <button
+                  key={tab.label}
+                  onClick={() => setActiveTab(i)}
+                  className={clsx(
+                    "flex items-center gap-2 px-4 py-3.5 text-sm font-semibold border-b-2 transition whitespace-nowrap",
+                    activeTab === i
+                      ? "border-indigo-600 text-indigo-600"
+                      : "border-transparent text-gray-500 hover:text-gray-800"
+                  )}
+                >
+                  {tab.label}
+                  <span className={clsx(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
+                    activeTab === i ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-500"
+                  )}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Search */}
+          <div className="relative py-2">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search bookings…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-56 transition"
+            />
+          </div>
         </div>
-        <div className="flex gap-3">
-          {/* Date picker placeholder */}
-          <input type="text" className="border border-gray-200 rounded-xl px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm bg-white" value="May 15, 2024 - Jun 13, 2024" readOnly />
-        </div>
-      </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 flex flex-col gap-2">
-          <div className="text-xs text-gray-500 font-medium">Total Bookings</div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-gray-900">{bookings.length}</span>
-            <span className="ml-auto text-green-600 text-xs font-semibold">Total</span>
+        {/* Table */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex gap-1.5">
+                {[0,1,2].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+              <p className="text-sm text-gray-400">Loading bookings…</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 flex flex-col gap-2">
-          <div className="text-xs text-gray-500 font-medium">Pending</div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-gray-900">{bookings.filter(b => b.status === 'Pending').length}</span>
-            <span className="ml-auto text-yellow-600 text-xs font-semibold">Pending</span>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {["Booking ID", "Customer", "Service", "Provider", "Date", "Amount", "Status", ""].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map((b, i) => {
+                  const st = statusCfg[b.status] ?? statusCfg["Upcoming"];
+                  const isUpdating = updatingId === b.id;
+                  return (
+                    <tr key={b.id} className="hover:bg-gray-50/60 transition group">
+                      <td className="px-4 py-3 font-semibold text-indigo-600 whitespace-nowrap text-xs">{b.id}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className={clsx("w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shrink-0", avatarColors[i % avatarColors.length])}>
+                            {getInitials(b.customer)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800 leading-tight text-xs">{b.customer}</p>
+                            <p className="text-[10px] text-gray-400 leading-tight">{b.phone}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 max-w-[160px]">
+                        <p className="text-xs text-gray-700 font-medium truncate">{b.service}</p>
+                        <p className="text-[10px] text-gray-400 capitalize">{b.schedule}</p>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <p className="text-xs text-gray-700 font-medium">{b.provider}</p>
+                        {b.providerRating && (
+                          <p className="text-[10px] text-amber-500">★ {b.providerRating}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{b.date}</td>
+                      <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap text-xs">S${b.amount.toLocaleString()}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={clsx("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold", st.cls)}>
+                          <span className={clsx("w-1.5 h-1.5 rounded-full", st.dot)} />
+                          {st.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setSelected(b)}
+                            className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition"
+                            title="View details"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={() => setMenuOpenId(menuOpenId === b.id ? null : b.id)}
+                              disabled={isUpdating}
+                              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition disabled:opacity-40"
+                              title="Actions"
+                            >
+                              {isUpdating
+                                ? <span className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin inline-block" />
+                                : <span className="text-sm leading-none font-bold tracking-widest">···</span>
+                              }
+                            </button>
+                            {menuOpenId === b.id && (
+                              <div ref={menuRef} className="absolute right-0 z-30 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 text-sm">
+                                <button onClick={() => { setSelected(b); setMenuOpenId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50">
+                                  <Eye size={13} className="text-indigo-500" /> View Details
+                                </button>
+                                <button onClick={() => updateStatus(b, "Completed")} disabled={b.status === "Completed"}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                  <CheckCircle size={13} className="text-emerald-500" /> Mark Completed
+                                </button>
+                                <button onClick={() => updateStatus(b, "Upcoming")} disabled={b.status === "Upcoming"}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                  <CalendarClock size={13} className="text-blue-500" /> Mark Upcoming
+                                </button>
+                                <div className="my-1 border-t border-gray-100" />
+                                <button onClick={() => updateStatus(b, "Cancelled")} disabled={b.status === "Cancelled"}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                  <XCircle size={13} className="text-red-500" /> Cancel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div className="text-center py-16">
+                <ShoppingCart size={32} className="text-gray-200 mx-auto mb-3" />
+                <p className="text-sm text-gray-400">No bookings found.</p>
+              </div>
+            )}
           </div>
-        </div>
-        <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 flex flex-col gap-2">
-          <div className="text-xs text-gray-500 font-medium">Completed</div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-gray-900">{bookings.filter(b => b.status === 'Completed').length}</span>
-            <span className="ml-auto text-green-600 text-xs font-semibold">Completed</span>
+        )}
+        {/* Footer */}
+        {!loading && filtered.length > 0 && (
+          <div className="px-4 py-3 border-t border-gray-50 text-xs text-gray-400">
+            Showing <span className="font-semibold text-gray-600">{filtered.length}</span> of <span className="font-semibold text-gray-600">{bookings.length}</span> bookings
           </div>
-        </div>
-        <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 flex flex-col gap-2">
-          <div className="text-xs text-gray-500 font-medium">Cancelled</div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-gray-900">{bookings.filter(b => b.status === 'Cancelled').length}</span>
-            <span className="ml-auto text-red-600 text-xs font-semibold">Cancelled</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Bookings Table */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-x-auto mt-2">
-        <table className="w-full text-base">
-          <thead>
-            <tr className="text-left text-gray-600 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-emerald-50">
-              {[
-                "Booking ID",
-                "Consumer",
-                "Service",
-                "Partner",
-                "Date & Time",
-                "Address",
-                "Amount",
-                "Status",
-                "Actions",
-              ].map((h) => (
-                <th key={h} className="px-6 py-4 font-bold tracking-wide whitespace-nowrap text-lg">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((b) => (
-              <tr key={b.id} className="border-b border-gray-100 hover:bg-indigo-50/60 transition group">
-                <td className="px-6 py-4 font-semibold text-indigo-700 whitespace-nowrap">{b.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-900">{b.consumer.name}</span>
-                    <span className="text-xs text-gray-400">{b.consumer.phone}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="font-semibold text-gray-800">{b.service.main}</span>
-                  <br />
-                  <span className="text-xs text-gray-400">{b.service.sub}</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <img src={b.partner.avatar} alt={b.partner.name} className="w-8 h-8 rounded-full border border-gray-200" />
-                    <div>
-                      <span className="font-semibold text-gray-900">{b.partner.name}</span>
-                      <span className="ml-1 text-xs text-yellow-500">★ {b.partner.rating}</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">{b.date}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-xs text-gray-500">{b.address}</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">₹ {b.amount.toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={clsx("px-3 py-1 rounded-full text-xs font-semibold", statusStyles[b.status] || "bg-gray-100 text-gray-500 border border-gray-200")}>{b.status}</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex gap-2">
-                    <button className="p-2 rounded-full hover:bg-gray-100 transition" title="View">
-                      <Eye size={18} className="text-indigo-500" />
-                    </button>
-                    <button className="p-2 rounded-full hover:bg-gray-100 transition" title="More">
-                      <MoreVertical size={18} className="text-gray-400" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <p className="text-center text-gray-400 py-10">No bookings found.</p>
         )}
       </div>
+
+      {/* Detail drawer */}
+      {selected && (
+        <div
+          className="absolute inset-0 z-50 flex items-start justify-end"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="bg-white h-full w-full max-w-sm shadow-2xl flex flex-col overflow-y-auto border-l border-gray-100"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Drawer header */}
+            <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+              <div>
+                <p className="text-xs text-gray-400 font-medium mb-1">Booking Details</p>
+                <p className="text-sm font-bold text-indigo-600">{selected.id}</p>
+                <span className={clsx("inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold", (statusCfg[selected.status] ?? statusCfg["Upcoming"]).cls)}>
+                  <span className={clsx("w-1.5 h-1.5 rounded-full", (statusCfg[selected.status] ?? statusCfg["Upcoming"]).dot)} />
+                  {selected.status}
+                </span>
+              </div>
+              <button onClick={() => setSelected(null)} className="p-1.5 hover:bg-gray-100 rounded-lg transition mt-0.5">
+                <X size={16} className="text-gray-400" />
+              </button>
+            </div>
+
+            {/* Detail sections */}
+            <div className="flex-1 px-5 py-4 space-y-5">
+              {/* Customer */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Customer</p>
+                <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <User size={13} className="text-indigo-400 shrink-0" />
+                    <span className="font-semibold text-gray-800">{selected.customer}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone size={13} className="text-indigo-400 shrink-0" />
+                    <span className="text-gray-600">{selected.phone}</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-sm">
+                    <MapPin size={13} className="text-indigo-400 shrink-0 mt-0.5" />
+                    <span className="text-gray-600 text-xs">{selected.address}{selected.city !== "—" ? `, ${selected.city}` : ""}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Service</p>
+                <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Package size={13} className="text-indigo-400 shrink-0" />
+                    <span className="text-gray-700 font-medium">{selected.service}</span>
+                  </div>
+                  {selected.items?.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      {selected.items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-xs text-gray-500 pl-5">
+                          <span>{item.name || item.serviceName || "Item"}</span>
+                          {item.price && <span className="font-semibold text-gray-700">S${Number(item.price).toLocaleString()}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Booking info */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Booking Info</p>
+                <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar size={13} className="text-indigo-400 shrink-0" />
+                    <span className="text-gray-600">{selected.date}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CreditCard size={13} className="text-indigo-400 shrink-0" />
+                    <span className="text-gray-600 capitalize">{selected.payment}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200 mt-1">
+                    <span className="text-gray-500 font-medium">Total</span>
+                    <span className="font-bold text-gray-900">S${selected.amount.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Provider */}
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-2">Provider</p>
+                <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                    <User size={14} className="text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{selected.provider}</p>
+                    {selected.providerRating && (
+                      <p className="text-xs text-amber-500">★ {selected.providerRating}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="px-5 py-4 border-t border-gray-100 space-y-2 shrink-0">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => updateStatus(selected, "Completed")}
+                  disabled={selected.status === "Completed" || updatingId === selected.id}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle size={14} /> Completed
+                </button>
+                <button
+                  onClick={() => updateStatus(selected, "Upcoming")}
+                  disabled={selected.status === "Upcoming" || updatingId === selected.id}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CalendarClock size={14} /> Upcoming
+                </button>
+              </div>
+              <button
+                onClick={() => updateStatus(selected, "Cancelled")}
+                disabled={selected.status === "Cancelled" || updatingId === selected.id}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Ban size={14} /> Cancel Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

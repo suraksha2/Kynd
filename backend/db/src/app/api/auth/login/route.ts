@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/mysql';
 import bcrypt from 'bcryptjs';
+import {
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,13 +54,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return user data without password
-    return NextResponse.json({
+    // Issue a signed, httpOnly session cookie carrying the user's role.
+    // This is what the server (middleware) uses for role-based access control;
+    // client-side localStorage state is purely cosmetic.
+    const token = await createSessionToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    const response = NextResponse.json({
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      // Token is also returned in the body so cross-origin clients (e.g. the
+      // customer app on :5173) can authenticate via an Authorization header,
+      // since cross-site cookies are unreliable in browsers.
+      token,
     });
+
+    response.cookies.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/',
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+
+    console.log('Login: Set cookie', SESSION_COOKIE_NAME, 'for user', user.email, 'role', user.role)
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

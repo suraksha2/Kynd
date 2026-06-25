@@ -53,8 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
-        // Check if user has admin role
-        if (data.role !== "admin") {
+        // Only super_admin and admin roles may access the admin panel.
+        if (data.role !== "super_admin" && data.role !== "admin") {
           return false;
         }
 
@@ -79,11 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setIsAuthenticated(false);
     setUser(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("adminAuth");
+    }
+    try {
+      // Clear the httpOnly session cookie on the server.
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 

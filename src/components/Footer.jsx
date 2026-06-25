@@ -1,9 +1,31 @@
 import { Link } from 'react-router-dom'
-import { cities } from '../data/cities'
+import { useEffect, useState } from 'react'
 import { useServices } from '../context/ServicesContext'
 
 export default function Footer() {
   const { services } = useServices()
+  const [cities, setCities] = useState([])
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/cities')
+        if (!response.ok) throw new Error('Failed to fetch cities')
+        const result = await response.json()
+        const data = result.data || []
+        const transformedCities = data.map(city => ({
+          id: city.id,
+          slug: city.cityName.toLowerCase().replace(/\s+/g, '-'),
+          name: city.cityName,
+        }))
+        setCities(transformedCities)
+      } catch (error) {
+        console.error('Error fetching cities:', error)
+      }
+    }
+
+    fetchCities()
+  }, [])
 
   return (
     <footer className="bg-[#0b1f14] text-neutral-300">

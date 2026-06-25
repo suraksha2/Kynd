@@ -10,8 +10,10 @@ import {
   BarChart2,
   Settings,
   LogOut,
-  ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
   Building2,
+  Zap,
 } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
@@ -41,33 +43,57 @@ export default function Sidebar() {
   return (
     <aside
       className={clsx(
-        "flex flex-col bg-sidebar text-white transition-all duration-300 shrink-0",
-        collapsed ? "w-16" : "w-64"
+        "flex flex-col bg-gray-950 text-white transition-all duration-300 shrink-0",
+        collapsed ? "w-[68px]" : "w-60"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between px-4 py-5 border-b border-slate-700">
+      <div className={clsx(
+        "flex items-center border-b border-gray-800 h-16 shrink-0",
+        collapsed ? "justify-center px-3" : "justify-between px-5"
+      )}>
         {!collapsed && (
-          <span className="text-xl font-bold tracking-wide text-white">
-            Admin<span className="text-indigo-400">Panel</span>
-          </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <Zap size={14} className="text-white" />
+            </div>
+            <span className="text-[15px] font-bold text-white tracking-tight">
+              Admin<span className="text-indigo-400">Panel</span>
+            </span>
+          </div>
         )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded hover:bg-sidebar-hover text-slate-400 hover:text-white transition"
-        >
-          <ChevronLeft
-            size={20}
-            className={clsx(
-              "transition-transform duration-300",
-              collapsed && "rotate-180"
-            )}
-          />
-        </button>
+        {collapsed && (
+          <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <Zap size={14} className="text-white" />
+          </div>
+        )}
+        {!collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition"
+          >
+            <PanelLeftClose size={17} />
+          </button>
+        )}
       </div>
 
+      {/* Expand button when collapsed */}
+      {collapsed && (
+        <div className="flex justify-center pt-3 pb-1">
+          <button
+            onClick={() => setCollapsed(false)}
+            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition"
+          >
+            <PanelLeftOpen size={17} />
+          </button>
+        </div>
+      )}
+
       {/* Nav */}
-      <nav className="flex-1 py-4 space-y-1 px-2">
+      <nav className="flex-1 py-3 space-y-0.5 px-2.5 overflow-y-auto">
+        {!collapsed && (
+          <p className="text-[10px] uppercase tracking-widest text-gray-600 font-semibold px-2 pb-2 pt-1">Menu</p>
+        )}
         {navItems.map(({ label, href, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (
@@ -75,28 +101,32 @@ export default function Sidebar() {
               key={href}
               href={href}
               className={clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-300 hover:bg-sidebar-hover hover:text-white"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                  : "text-gray-400 hover:bg-gray-800/80 hover:text-white",
+                collapsed && "justify-center"
               )}
               title={collapsed ? label : undefined}
             >
-              <Icon size={18} className="shrink-0" />
-              {!collapsed && <span>{label}</span>}
+              <Icon size={17} className="shrink-0" />
+              {!collapsed && <span className="leading-none">{label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="px-2 py-4 border-t border-slate-700">
+      <div className={clsx("px-2.5 py-4 border-t border-gray-800", collapsed && "flex justify-center")}>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-sidebar-hover hover:text-white w-full transition-colors"
+          className={clsx(
+            "flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-150",
+            collapsed ? "justify-center" : "w-full"
+          )}
           title={collapsed ? "Logout" : undefined}
         >
-          <LogOut size={18} className="shrink-0" />
+          <LogOut size={17} className="shrink-0" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>

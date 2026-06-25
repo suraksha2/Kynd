@@ -1,74 +1,71 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import pool from "@/lib/mysql";
 
 export async function GET() {
   try {
-    // Get total revenue from orders
+    // Total revenue from completed bookings
     const [revenueResult] = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) as totalRevenue FROM orders WHERE status = 'Completed'`
+      `SELECT COALESCE(SUM(total), 0) as totalRevenue FROM bookings WHERE status = 'completed'`
     );
     const totalRevenue = (revenueResult as any)[0].totalRevenue;
 
-    // Get total clients count
-    const [clientsResult] = await pool.query(`SELECT COUNT(*) as totalClients FROM clients`);
+    // Unique clients by phone number across all bookings
+    const [clientsResult] = await pool.query(
+      `SELECT COUNT(DISTINCT contact_phone) as totalClients FROM bookings`
+    );
     const totalClients = (clientsResult as any)[0].totalClients;
 
-    // Get total orders count
-    const [ordersResult] = await pool.query(`SELECT COUNT(*) as totalOrders FROM orders`);
+    // Total bookings
+    const [ordersResult] = await pool.query(`SELECT COUNT(*) as totalOrders FROM bookings`);
     const totalOrders = (ordersResult as any)[0].totalOrders;
 
-    // Get order statistics by status for today
-    const today = new Date().toISOString().slice(0, 10);
-    const [todayOrdersResult] = await pool.query(
-      `SELECT status, COUNT(*) as count FROM orders WHERE DATE(date) = CURDATE() GROUP BY status`
+    // Today's bookings grouped by status
+    const [todayResult] = await pool.query(
+      `SELECT status, COUNT(*) as count FROM bookings WHERE DATE(placed_at) = CURDATE() GROUP BY status`
     );
-    
-    const todayOrdersStats: Record<string, number> = {
-      todayOrders: 0,
-      reprocessingToday: 0,
-      processingToday: 0,
-      pendingToday: 0,
-      completedTotal: 0,
-    };
 
-    (todayOrdersResult as any[]).forEach((row) => {
-      const status = row.status.toLowerCase();
-      if (status === 'reprocessing') {
-        todayOrdersStats.reprocessingToday = row.count;
-      } else if (status === 'processing') {
-        todayOrdersStats.processingToday = row.count;
-      } else if (status === 'pending') {
-        todayOrdersStats.pendingToday = row.count;
-      }
-      todayOrdersStats.todayOrders += row.count;
+    let todayOrders = 0;
+    let upcomingToday = 0;
+    let cancelledToday = 0;
+    let completedToday = 0;
+
+    (todayResult as any[]).forEach((row) => {
+      const s = row.status.toLowerCase();
+      todayOrders += Number(row.count);
+      if (s === 'upcoming')  upcomingToday  = Number(row.count);
+      if (s === 'cancelled') cancelledToday = Number(row.count);
+      if (s === 'completed') completedToday = Number(row.count);
     });
 
-    // Get total completed orders
+    // Total completed bookings (all-time)
     const [completedResult] = await pool.query(
-      `SELECT COUNT(*) as completedTotal FROM orders WHERE status = 'Completed'`
+      `SELECT COUNT(*) as completedTotal FROM bookings WHERE status = 'completed'`
     );
-    todayOrdersStats.completedTotal = (completedResult as any)[0].completedTotal;
+    const completedTotal = (completedResult as any)[0].completedTotal;
 
-    // Get growth rate from analytics
-    const [analyticsResult] = await pool.query(
-      `SELECT revenue FROM analytics ORDER BY month DESC LIMIT 2`
+    // Growth rate: compare current month vs previous month revenue
+    const [growthResult] = await pool.query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN MONTH(placed_at) = MONTH(CURDATE()) AND YEAR(placed_at) = YEAR(CURDATE()) THEN total ELSE 0 END), 0) as currentMonth,
+         COALESCE(SUM(CASE WHEN MONTH(placed_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND YEAR(placed_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) THEN total ELSE 0 END), 0) as previousMonth
+       FROM bookings WHERE status = 'completed'`
     );
-    let growthRate = 0;
-    if ((analyticsResult as any[]).length >= 2) {
-      const currentMonth = (analyticsResult as any[])[0].revenue;
-      const previousMonth = (analyticsResult as any[])[1].revenue;
-      if (previousMonth > 0) {
-        growthRate = ((currentMonth - previousMonth) / previousMonth) * 100;
-      }
-    }
+    const { currentMonth, previousMonth } = (growthResult as any)[0];
+    const growthRate = previousMonth > 0
+      ? ((currentMonth - previousMonth) / previousMonth) * 100
+      : 0;
 
     return NextResponse.json({
       data: {
-        totalRevenue: totalRevenue || 0,
-        totalClients: totalClients || 0,
-        totalOrders: totalOrders || 0,
-        growthRate: growthRate || 0,
-        ...todayOrdersStats,
+        totalRevenue: Number(totalRevenue) || 0,
+        totalClients: Number(totalClients) || 0,
+        totalOrders: Number(totalOrders) || 0,
+        growthRate: Number(growthRate) || 0,
+        todayOrders,
+        reprocessingToday: 0,
+        processingToday: upcomingToday,
+        pendingToday: cancelledToday,
+        completedTotal: Number(completedTotal) || 0,
       },
     }, { status: 200 });
   } catch (err) {

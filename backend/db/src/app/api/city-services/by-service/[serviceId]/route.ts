@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCitiesByServiceId } from "@/lib/city-services-db";
+import { getCitiesByServiceName } from "@/lib/city-services-db";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { serviceId: string } }
 ) {
   try {
-    const { serviceId } = params;
-    const cityServices = await getCitiesByServiceId(serviceId);
-    
+    const serviceName = decodeURIComponent(params.serviceId);
+    const cityServices = await getCitiesByServiceName(serviceName);
+
     return NextResponse.json({ data: cityServices }, { status: 200 });
   } catch (err) {
     console.error("[GET /api/city-services/by-service/[serviceId]]", err);

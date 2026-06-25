@@ -3,40 +3,54 @@ import {
   CityService,
   CreateCityServiceInput,
   UpdateCityServiceInput,
+  ServiceCategory,
   ServiceStatus,
 } from "./types";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 
 interface DbCityServiceRow extends RowDataPacket {
   id: number;
-  city_id: number | null;
-  service_id: number | null;
+  city_id: number;
+  name: string;
+  category: string;
+  description: string;
   status: string;
+  provider: string;
+  contact_email: string;
+  contact_phone: string;
+  budget: number;
+  start_date: string;
+  end_date: string | null;
   created_at: string;
   updated_at: string;
-  name?: string;
-  category?: string;
 }
 
 function mapCityService(row: DbCityServiceRow): CityService {
   return {
     id: row.id.toString(),
-    cityId: row.city_id ? row.city_id.toString() : undefined,
-    serviceId: row.service_id ? row.service_id.toString() : undefined,
+    cityId: row.city_id.toString(),
+    name: row.name,
+    category: row.category as ServiceCategory,
+    description: row.description,
     status: row.status as ServiceStatus,
+    provider: row.provider,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    budget: Number(row.budget),
+    startDate: row.start_date,
+    endDate: row.end_date,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    name: row.name,
-    category: row.category,
   };
 }
 
 export async function getCityServices(): Promise<CityService[]> {
   const [rows] = await pool.query<DbCityServiceRow[]>(
-    `SELECT cs.id, cs.city_id, cs.service_id, cs.status, cs.created_at, cs.updated_at,
-            s.name, s.category
-     FROM city_services cs
-     LEFT JOIN services s ON cs.service_id = s.id`
+    `SELECT id, city_id, name, category, description, status,
+            provider, contact_email, contact_phone, budget,
+            start_date, end_date, created_at, updated_at
+     FROM city_services
+     ORDER BY created_at DESC`
   );
 
   return rows.map(mapCityService);
@@ -46,11 +60,11 @@ export async function getCityServiceById(
   id: string
 ): Promise<CityService | null> {
   const [rows] = await pool.query<DbCityServiceRow[]>(
-    `SELECT cs.id, cs.city_id, cs.service_id, cs.status, cs.created_at, cs.updated_at,
-            s.name, s.category
-     FROM city_services cs
-     LEFT JOIN services s ON cs.service_id = s.id
-     WHERE cs.id = ?`,
+    `SELECT id, city_id, name, category, description, status,
+            provider, contact_email, contact_phone, budget,
+            start_date, end_date, created_at, updated_at
+     FROM city_services
+     WHERE id = ?`,
     [id]
   );
 
@@ -65,25 +79,31 @@ export async function createCityService(
   input: CreateCityServiceInput
 ): Promise<CityService> {
   const [result] = await pool.query<ResultSetHeader>(
-    "INSERT INTO city_services (city_id, service_id, status) VALUES (?, ?, ?)",
+    `INSERT INTO city_services (
+      city_id, name, category, description, status,
+      provider, contact_email, contact_phone, budget,
+      start_date, end_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      input.cityId ? parseInt(input.cityId) : null,
-      input.serviceId ? parseInt(input.serviceId) : null,
+      parseInt(input.cityId),
+      input.name,
+      input.category,
+      input.description,
       input.status,
+      input.provider,
+      input.contactEmail,
+      input.contactPhone,
+      input.budget,
+      input.startDate,
+      input.endDate,
     ]
   );
 
-  const insertId = result.insertId;
-  const [rows] = await pool.query<DbCityServiceRow[]>(
-    `SELECT cs.id, cs.city_id, cs.service_id, cs.status, cs.created_at, cs.updated_at,
-            s.name, s.category
-     FROM city_services cs
-     LEFT JOIN services s ON cs.service_id = s.id
-     WHERE cs.id = ?`,
-    [insertId]
-  );
-
-  return mapCityService(rows[0]);
+  const created = await getCityServiceById(result.insertId.toString());
+  if (!created) {
+    throw new Error("Failed to fetch created city service.");
+  }
+  return created;
 }
 
 export async function updateCityService(
@@ -95,30 +115,41 @@ export async function updateCityService(
     return null;
   }
 
+  const cityId = input.cityId ?? existing.cityId;
+  const name = input.name ?? existing.name;
+  const category = input.category ?? existing.category;
+  const description = input.description ?? existing.description;
+  const status = input.status ?? existing.status;
+  const provider = input.provider ?? existing.provider;
+  const contactEmail = input.contactEmail ?? existing.contactEmail;
+  const contactPhone = input.contactPhone ?? existing.contactPhone;
+  const budget = input.budget ?? existing.budget;
+  const startDate = input.startDate ?? existing.startDate;
+  const endDate = input.endDate !== undefined ? input.endDate : existing.endDate;
+
   await pool.query(
-    "UPDATE city_services SET city_id = ?, service_id = ?, status = ? WHERE id = ?",
+    `UPDATE city_services SET
+      city_id = ?, name = ?, category = ?, description = ?, status = ?,
+      provider = ?, contact_email = ?, contact_phone = ?, budget = ?,
+      start_date = ?, end_date = ?
+     WHERE id = ?`,
     [
-      input.cityId ? parseInt(input.cityId) : existing.cityId ? parseInt(existing.cityId) : null,
-      input.serviceId ? parseInt(input.serviceId) : existing.serviceId ? parseInt(existing.serviceId) : null,
-      input.status ?? existing.status,
+      parseInt(cityId),
+      name,
+      category,
+      description,
+      status,
+      provider,
+      contactEmail,
+      contactPhone,
+      budget,
+      startDate,
+      endDate,
       id,
     ]
   );
 
-  const [rows] = await pool.query<DbCityServiceRow[]>(
-    `SELECT cs.id, cs.city_id, cs.service_id, cs.status, cs.created_at, cs.updated_at,
-            s.name, s.category
-     FROM city_services cs
-     LEFT JOIN services s ON cs.service_id = s.id
-     WHERE cs.id = ?`,
-    [id]
-  );
-
-  if (rows.length === 0) {
-    return null;
-  }
-
-  return mapCityService(rows[0]);
+  return getCityServiceById(id);
 }
 
 export async function deleteCityService(id: string): Promise<boolean> {
@@ -130,23 +161,16 @@ export async function deleteCityService(id: string): Promise<boolean> {
   return result.affectedRows > 0;
 }
 
-export async function getCitiesByServiceId(serviceId: string): Promise<CityService[]> {
+export async function getCitiesByServiceName(serviceName: string): Promise<CityService[]> {
   const [rows] = await pool.query<DbCityServiceRow[]>(
-    `SELECT c.id as city_id, c.serviceCategoryId, s.id as service_id, s.name, s.category
-     FROM cities c
-     LEFT JOIN services s ON c.serviceCategoryId = s.id
-     WHERE c.serviceCategoryId = ?`,
-    [serviceId]
+    `SELECT id, city_id, name, category, description, status,
+            provider, contact_email, contact_phone, budget,
+            start_date, end_date, created_at, updated_at
+     FROM city_services
+     WHERE name = ?
+     ORDER BY created_at DESC`,
+    [serviceName]
   );
 
-  return rows.map((row: any) => ({
-    id: row.city_id?.toString() || '',
-    cityId: row.city_id?.toString(),
-    serviceId: row.service_id?.toString(),
-    status: 'Active' as ServiceStatus,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    name: row.name,
-    category: row.category
-  }));
+  return rows.map(mapCityService);
 }

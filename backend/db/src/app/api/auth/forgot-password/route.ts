@@ -43,15 +43,12 @@ export async function POST(request: NextRequest) {
     );
 
     // In a real application, you would send an email here with the reset link
-    // For now, we'll return the token in the response for testing purposes
-    // In production, remove the token from the response and send via email
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+    // TODO: Implement email sending service (e.g., SendGrid, AWS SES, etc.)
+    // const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+    // await sendResetEmail(user.email, resetUrl);
 
     return NextResponse.json({
-      message: 'If an account exists with this email, you will receive a password reset link.',
-      // Remove this in production - only for development/testing
-      resetToken,
-      resetUrl
+      message: 'If an account exists with this email, you will receive a password reset link.'
     });
   } catch (error) {
     console.error('Forgot password error:', error);

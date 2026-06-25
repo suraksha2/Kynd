@@ -19,6 +19,23 @@ export function AuthProvider({ children }) {
     } catch {}
   }, [user])
 
+  // Keep auth state in sync across browser tabs/windows of the same origin.
+  // Without this, a tab that logged in earlier keeps a stale in-memory session
+  // (e.g. an admin shell) even after another tab logs out or logs in as a
+  // different user.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key !== USER_KEY) return
+      try {
+        setUser(e.newValue ? JSON.parse(e.newValue) : null)
+      } catch {
+        setUser(null)
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   const signup = async ({ name, email, password }) => {
     const normalizedEmail = String(email).trim().toLowerCase()
     if (!name || !normalizedEmail || !password) throw new Error('All fields are required.')
@@ -51,7 +68,7 @@ export function AuthProvider({ children }) {
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'Unable to sign in.')
 
-    const session = { name: data.name, email: data.email, id: data.id, role: data.role }
+    const session = { name: data.name, email: data.email, id: data.id, role: data.role, token: data.token }
     setUser(session)
     return session
   }
@@ -90,8 +107,10 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  const isAdmin = !!user && (user.role === 'admin' || user.role === 'super_admin')
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, signup, login, logout, requestPasswordReset, resetPassword }}>
+    <AuthContext.Provider value={{ user, token: user?.token || null, isAuthenticated: !!user, isAdmin, signup, login, logout, requestPasswordReset, resetPassword }}>
       {children}
     </AuthContext.Provider>
   )

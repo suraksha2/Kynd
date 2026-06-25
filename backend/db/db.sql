@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS cities (
   serviceCategoryId VARCHAR(255)
 );
 
+-- City Areas table (areas/localities per city)
+CREATE TABLE IF NOT EXISTS city_areas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  city_id INT NOT NULL,
+  area_name VARCHAR(255) NOT NULL,
+  pincode VARCHAR(20),
+  status ENUM('active', 'inactive') DEFAULT 'active',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE
+);
+
 -- Services table
 CREATE TABLE IF NOT EXISTS services (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,7 +39,10 @@ CREATE TABLE IF NOT EXISTS services (
   price DECIMAL(10,2),
   availability VARCHAR(100),
   status VARCHAR(50),
-  image VARCHAR(255)
+  image VARCHAR(255),
+  duration VARCHAR(100),
+  rating DECIMAL(3,2) DEFAULT 0.00,
+  review_count INT DEFAULT 0
 );
 
 -- Clients table
@@ -42,16 +57,23 @@ CREATE TABLE IF NOT EXISTS clients (
   avatar VARCHAR(10)
 );
 
--- City Services table
+-- City Services table (admin-managed civic services per city)
 CREATE TABLE IF NOT EXISTS city_services (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  city_id INT,
-  service_id INT,
-  status VARCHAR(50),
+  city_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  description TEXT,
+  status ENUM('Active', 'Pending', 'Suspended', 'Completed') DEFAULT 'Pending',
+  provider VARCHAR(255),
+  contact_email VARCHAR(255),
+  contact_phone VARCHAR(50),
+  budget DECIMAL(10,2) DEFAULT 0,
+  start_date DATE,
+  end_date DATE,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (city_id) REFERENCES cities(id),
-  FOREIGN KEY (service_id) REFERENCES services(id)
+  FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE
 );
 
 -- Products table
@@ -109,6 +131,23 @@ CREATE TABLE IF NOT EXISTS analytics (
   revenue DECIMAL(10,2)
 );
 
+-- Service Providers table
+CREATE TABLE IF NOT EXISTS service_providers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  mobile VARCHAR(20) NOT NULL,
+  services JSON NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  status ENUM('active', 'inactive', 'busy') DEFAULT 'active',
+  rating DECIMAL(3,2) DEFAULT 0.00,
+  total_jobs INT DEFAULT 0,
+  avatar VARCHAR(255),
+  joined DATE DEFAULT CURRENT_DATE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Bookings table
 CREATE TABLE IF NOT EXISTS bookings (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -127,7 +166,10 @@ CREATE TABLE IF NOT EXISTS bookings (
   payment VARCHAR(50) NOT NULL,
   placed_at DATETIME NOT NULL,
   status ENUM('upcoming', 'completed', 'cancelled') DEFAULT 'upcoming',
+  provider_id INT,
+  assigned_at DATETIME,
   history JSON,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (provider_id) REFERENCES service_providers(id) ON DELETE SET NULL
 );

@@ -18,7 +18,8 @@ const readStore = () => {
  *   contact: { name, phone, address, city, pincode },
  *   payment, placedAt,
  *   status: 'upcoming' | 'completed' | 'cancelled',
- *   history: [{ at, type, note }]
+ *   history: [{ at, type, note }],
+ *   provider: { id, name, mobile, city, rating, totalJobs }
  * }
  */
 

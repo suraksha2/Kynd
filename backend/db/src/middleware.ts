@@ -39,10 +39,15 @@ function isPublicApi(pathname: string, method: string): boolean {
     if (/^\/api\/city-services(\/.+)?$/.test(pathname)) return true
     if (/^\/api\/city-areas$/.test(pathname)) return true
     if (/^\/api\/service-categories(\/[^/]+)?$/.test(pathname)) return true
+    // Customers verify their own payment status (client_secret already on client).
+    if (/^\/api\/payments\/[^/]+$/.test(pathname)) return true
   }
 
   // Customers create bookings without an admin session.
   if (method === 'POST' && pathname === '/api/bookings') return true
+
+  // Customers create payment intents during checkout without an admin session.
+  if (method === 'POST' && pathname === '/api/payments/create-intent') return true
 
   return false
 }

@@ -6,3 +6,15 @@ android
 ios
 .next
 **/.next
+
+# Environment files with secrets — never commit these.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Build artifacts
+*.tsbuildinfo
+**/*.tsbuildinfo

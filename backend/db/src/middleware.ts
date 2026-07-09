@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { SESSION_COOKIE_NAME, hasAdminAccess, verifySessionToken } from '@/lib/auth'
 
-const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173']
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  // Standalone admin console (separate Vite app / Node process).
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+]
 
 // Page routes that anyone may reach without an admin session.
 const PUBLIC_PAGES = ['/login']

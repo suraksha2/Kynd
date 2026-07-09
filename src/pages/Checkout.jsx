@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { CreditCard, Wallet, Banknote, ShieldCheck, X } from 'lucide-react'
+import { CreditCard, Wallet, Banknote, ShieldCheck } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useBookings } from '../context/BookingsContext'
-import AirwallexDropIn from '../components/AirwallexDropIn'
 
 const API_BASE = 'http://localhost:3001'
 
@@ -30,8 +29,6 @@ export default function Checkout() {
   const [pincode, setPincode] = useState('')
   const [pay, setPay] = useState('card')
   const [submitting, setSubmitting] = useState(false)
-  // When set, the Airwallex Drop-in modal is shown for an online payment.
-  const [paymentSession, setPaymentSession] = useState(null)
   const [payError, setPayError] = useState(null)
   const [loadingCities, setLoadingCities] = useState(true)
   const [citiesError, setCitiesError] = useState(null)
@@ -143,7 +140,7 @@ export default function Checkout() {
       return
     }
 
-    // Online payment via Airwallex: create a PaymentIntent, then open Drop-in.
+    // Online payment via Airwallex Hosted Payment Page: create a PaymentIntent and redirect.
     try {
       const res = await fetch(`${API_BASE}/api/payments/create-intent`, {
         method: 'POST',
@@ -158,38 +155,32 @@ export default function Checkout() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to start payment')
 
-      setPaymentSession({
-        intentId: data.id,
-        clientSecret: data.clientSecret,
+      // Store order data for verification after payment redirect
+      try {
+        localStorage.setItem('helpr.pendingOrder', JSON.stringify({
+          bookingId: order.bookingId,
+          intentId: data.id,
+          order,
+        }))
+      } catch {}
+
+      // Redirect to Hosted Payment Page
+      const { init } = await import('@airwallex/components-sdk')
+      const AIRWALLEX_ENV = import.meta.env.VITE_AIRWALLEX_ENV || 'prod'
+      const { payments } = await init({
+        env: AIRWALLEX_ENV,
+        enabledElements: ['payments'],
+      })
+
+      payments.redirectToCheckout({
+        intent_id: data.id,
+        client_secret: data.clientSecret,
         currency: data.currency,
-        order,
+        country_code: 'SG',
       })
     } catch (error) {
       console.error('Payment init error:', error)
       alert(error.message || 'Could not start payment. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handlePaymentSuccess = async () => {
-    const session = paymentSession
-    if (!session) return
-    setSubmitting(true)
-    try {
-      // Verify the payment status server-side before fulfilling the booking.
-      const verifyRes = await fetch(`${API_BASE}/api/payments/${session.intentId}`)
-      const verify = await verifyRes.json()
-      const ok = verifyRes.ok && ['SUCCEEDED', 'REQUIRES_CAPTURE'].includes(verify.status)
-      if (!ok) throw new Error('Payment could not be verified. Please contact support.')
-
-      const paidOrder = { ...session.order, paymentIntentId: session.intentId, paymentStatus: verify.status }
-      setPaymentSession(null)
-      await finalizeBooking(paidOrder)
-    } catch (error) {
-      console.error('Payment verification error:', error)
-      setPayError(error.message || 'Payment verification failed.')
-    } finally {
       setSubmitting(false)
     }
   }
@@ -303,40 +294,6 @@ export default function Checkout() {
           </aside>
         </form>
       </div>
-
-      {paymentSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
-              <div>
-                <h3 className="font-bold text-neutral-900">Complete payment</h3>
-                <p className="text-xs text-neutral-500">Total S${paymentSession.order.total.toFixed(2)} · {paymentSession.order.bookingId}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPaymentSession(null)}
-                disabled={submitting}
-                className="rounded-full p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-50"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-5 py-5">
-              {payError && (
-                <div className="mb-3 rounded-lg bg-red-50 text-red-700 text-sm px-3 py-2">{payError}</div>
-              )}
-              <AirwallexDropIn
-                intentId={paymentSession.intentId}
-                clientSecret={paymentSession.clientSecret}
-                currency={paymentSession.currency}
-                onSuccess={handlePaymentSuccess}
-                onError={(msg) => setPayError(msg)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   )
 }

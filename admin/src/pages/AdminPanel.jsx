@@ -1,8 +1,19 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { LogOut } from "lucide-react";
+import { useAuth, API_BASE } from "../context/AuthContext";
+
+// Service images are stored as relative paths (e.g. "/images/foo.webp") that
+// are served by the backend (Next.js), not this admin app. Resolve them against
+// the backend origin so they load correctly from :5174.
+const ASSET_BASE = API_BASE.replace(/\/api\/?$/, "");
+const resolveImage = (path) => {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${ASSET_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+};
 
 export default function AdminPanel() {
-  const { token } = useAuth();
+  const { token, user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -32,8 +43,6 @@ export default function AdminPanel() {
     { id: "providers", label: "Service Providers" },
     { id: "clients", label: "Clients" },
   ];
-
-  const API_BASE = "http://localhost:3001/api";
 
   // Attach the admin session token so the backend RBAC middleware authorizes
   // these cross-origin requests.
@@ -259,16 +268,9 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f5]">
-      
+
       {/* Navbar */}
-      <header className="w-full flex justify-center pt-4">
-          
-          {/* Left */}
-          <div className="flex items-center gap-8 text-sm text-gray-600 font-medium">
-            <button>Why us</button>
-            <button>Services</button>
-            <button>Cities</button>
-          </div>
+      <header className="w-full flex items-center justify-between px-6 pt-4">
 
           {/* Logo */}
           <h1 className="text-3xl font-bold text-green-500">
@@ -276,24 +278,30 @@ export default function AdminPanel() {
           </h1>
 
           {/* Right */}
-          <div className="flex items-center gap-8 text-sm text-gray-600 font-medium">
-            <button>How it works</button>
-            <button>FAQs</button>
-
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-              🛒
+          <div className="flex items-center gap-4 text-sm text-gray-600 font-medium">
+            <div className="hidden sm:flex flex-col items-end leading-tight">
+              <span className="font-semibold text-gray-900">{user?.name || 'Admin'}</span>
+              <span className="text-xs text-gray-400">{user?.email}</span>
             </div>
 
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center font-semibold">
-              J
+            <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center font-semibold text-green-700">
+              {user?.name?.charAt(0)?.toUpperCase() || 'A'}
             </div>
+
+            <button
+              onClick={logout}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
           </div>
 
       </header>
 
       {/* Main */}
       <main className="max-w-6xl mx-auto mt-10 px-4">
-        
+
         {/* Heading */}
         <div className="mb-8">
           <h2 className="text-4xl font-bold text-gray-900">
@@ -324,7 +332,7 @@ export default function AdminPanel() {
 
         {/* Content Container */}
         <div className="bg-white rounded-3xl border border-gray-100 min-h-[420px] overflow-hidden">
-          
+
           {/* Overview Tab */}
           {activeTab === "overview" && (
             <div className="p-8">
@@ -459,7 +467,7 @@ export default function AdminPanel() {
                     <div key={service.id} className="p-4 bg-gray-50 rounded-xl">
                       <div className="w-full h-32 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
                         {service.image ? (
-                          <img src={service.image} alt={service.name} className="w-full h-full object-cover rounded-lg" />
+                          <img src={resolveImage(service.image)} alt={service.name} className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <span className="text-gray-400">No image</span>
                         )}
@@ -531,8 +539,8 @@ export default function AdminPanel() {
                         <p className="text-sm text-gray-500">{provider.total_jobs || 0} jobs</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        provider.status === 'active' ? 'bg-green-100 text-green-700' : 
-                        provider.status === 'busy' ? 'bg-orange-100 text-orange-700' : 
+                        provider.status === 'active' ? 'bg-green-100 text-green-700' :
+                        provider.status === 'busy' ? 'bg-orange-100 text-orange-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>
                         {provider.status || 'Active'}
@@ -558,7 +566,7 @@ export default function AdminPanel() {
               ) : clients.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[320px] text-center">
                   <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    �
+                    👥
                   </div>
                   <p className="text-gray-500 text-lg font-medium">No clients yet</p>
                 </div>
@@ -601,7 +609,7 @@ export default function AdminPanel() {
             <p className="text-gray-600 mb-4">
               Order for: <span className="font-semibold">{selectedOrder.clientName}</span>
             </p>
-            
+
             <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
               {providers.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No service providers available</p>
@@ -655,7 +663,7 @@ export default function AdminPanel() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Add Service Provider</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -667,7 +675,7 @@ export default function AdminPanel() {
                   placeholder="Enter provider name"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
@@ -678,7 +686,7 @@ export default function AdminPanel() {
                   placeholder="Enter email"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
                 <input
@@ -689,7 +697,7 @@ export default function AdminPanel() {
                   placeholder="Enter mobile number"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Services</label>
                 <select
@@ -733,7 +741,7 @@ export default function AdminPanel() {
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                 <select
@@ -753,7 +761,7 @@ export default function AdminPanel() {
                   )}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select

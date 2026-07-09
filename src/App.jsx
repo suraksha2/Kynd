@@ -1,6 +1,5 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
-import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
@@ -20,19 +19,6 @@ import ResetPassword from './pages/ResetPassword'
 import Account from './pages/Account'
 import Bookings from './pages/Bookings'
 import BookingDetail from './pages/BookingDetail'
-import AdminPanel from './pages/AdminPanel'
-
-function RequireAdmin({ children }) {
-  const { isAdmin, isAuthenticated } = useAuth()
-  const location = useLocation()
-  if (!isAdmin) {
-    // Logged-in non-admins go home (sending them to /login would loop);
-    // anonymous visitors are sent to login to authenticate.
-    if (isAuthenticated) return <Navigate to="/" replace />
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />
-  }
-  return children
-}
 
 export default function App() {
   return (
@@ -55,7 +41,6 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/account" element={<Account />} />
         <Route path="/bookings" element={<Bookings />} />
-        <Route path="/admin" element={<RequireAdmin><AdminPanel /></RequireAdmin>} />
         <Route path="/bookings/:id" element={<BookingDetail />} />
         <Route path="/tnc" element={<TnC />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

@@ -21,14 +21,9 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const session = await login({ email, password })
-      const isAdminUser = session?.role === 'admin' || session?.role === 'super_admin'
-      // Avoid login loops: never send a user back to /login, and don't send a
-      // non-admin to an admin-only route (RequireAdmin would bounce them here).
-      let dest = redirectTo
-      if (dest === '/login' || (!isAdminUser && dest.startsWith('/admin'))) {
-        dest = '/'
-      }
+      await login({ email, password })
+      // Avoid login loops: never send a user back to /login.
+      const dest = redirectTo === '/login' ? '/' : redirectTo
       navigate(dest, { replace: true })
     } catch (err) {
       setError(err.message || 'Unable to sign in.')

@@ -7,12 +7,18 @@ This guide deploys the **Helpr** project on a Contabo VPS that already runs **Ap
 | Component        | Path             | Tech              | Port | Notes |
 |------------------|------------------|-------------------|------|-------|
 | Frontend (SPA)   | `/`              | Vite + React      | —    | Static build → `dist/`, served by Apache |
-| Backend / Admin  | `/backend/db`    | Next.js 14        | 3001 | API routes under `/api/*`, runs via PM2 |
+| Admin console    | `/admin`         | Vite + React      | —    | **Separate** static build → `admin/dist/`, served by Apache on its own subdomain |
+| Backend / API    | `/backend/db`    | Next.js 14        | 3001 | API routes under `/api/*`, runs via PM2 |
 | Database         | —                | MySQL             | 3306 | DB name: `urban_service` |
 
 Apache serves the static SPA and **reverse-proxies `/api`** to the Next.js
-backend on `localhost:3001`. This keeps everything on one domain (no CORS, no
-hardcoded `localhost` in the browser).
+backend on `localhost:3001`. This keeps the storefront everything on one domain
+(no CORS, no hardcoded `localhost` in the browser).
+
+The **admin console is a standalone Vite app** (folder `admin/`) — it is *not*
+part of the storefront SPA anymore. It is served from its own subdomain (e.g.
+`admin.helpr.example.com`) and talks to the same backend API. See
+[Section 8b](#8b-build--serve-the-admin-console) below.
 
 ---
 
@@ -117,11 +123,15 @@ The frontend currently points at `http://localhost:3001`, which only works on
 your dev machine. For production, switch it to a **relative `/api` base** so the
 browser hits the same domain (Apache then proxies it to the backend).
 
-Affected files:
+Affected files (storefront):
 - `src/context/AuthContext.jsx`  → `const API_BASE = 'http://localhost:3001/api'`
 - `src/context/ServicesContext.jsx` → `let url = 'http://localhost:3001/api/services'`
-- `src/pages/AdminPanel.jsx` → `const API_BASE = "http://localhost:3001/api";`
 - `src/components/home/Hero.jsx` → `const API_BASE = 'http://localhost:3001'`
+
+> The admin panel is no longer part of the storefront (`src/pages/AdminPanel.jsx`
+> has been removed). The admin now lives in the standalone `admin/` app and is
+> configured separately via a build-time env var — see
+> [Section 8b](#8b-build--serve-the-admin-console).
 
 **Recommended:** use a Vite env variable. Create `.env.production` in the
 project root:
@@ -227,11 +237,91 @@ sudo systemctl reload apache2
 
 ---
 
+## 8b. Build & serve the admin console
+
+The admin is a **separate Vite app** in `admin/`. It must be built with a
+production API base, served on its own subdomain, and its origin whitelisted for
+CORS in the backend (because it lives on a different origin than the API domain).
+
+### 1. Whitelist the admin origin in the backend
+
+Edit `backend/db/src/middleware.ts` and add your production admin origin to
+`allowedOrigins`, then rebuild + restart the backend (Step 6):
+
+```ts
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'https://admin.helpr.example.com', // <-- production admin
+]
+```
+
+### 2. Build the admin with a production API base
+
+Point the admin at the **main domain's** `/api` so both API calls and service
+images (served from the storefront's `/images`) resolve correctly:
+
+```bash
+cd /var/www/helpr/admin
+npm ci
+printf 'VITE_API_BASE=https://helpr.example.com/api\n' > .env.production
+npm run build   # outputs to admin/dist/
+```
+
+> `resolveImage()` in the admin strips `/api` from `VITE_API_BASE`, so with the
+> value above, images load from `https://helpr.example.com/images/...` — which
+> the storefront `dist/` already serves.
+
+### 3. Point DNS + create an Apache vhost for the subdomain
+
+Add an `A` record for `admin.helpr.example.com` → VPS IP, then create
+`/etc/apache2/sites-available/helpr-admin.conf`:
+
+```apache
+<VirtualHost *:80>
+    ServerName admin.helpr.example.com
+    DocumentRoot /var/www/helpr/admin/dist
+
+    <Directory /var/www/helpr/admin/dist>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # SPA fallback for client-side routing (/login etc.)
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ /index.html [L]
+
+    ErrorLog  ${APACHE_LOG_DIR}/helpr_admin_error.log
+    CustomLog ${APACHE_LOG_DIR}/helpr_admin_access.log combined
+</VirtualHost>
+```
+
+Enable it and reload:
+
+```bash
+sudo a2ensite helpr-admin.conf
+sudo apache2ctl configtest
+sudo systemctl reload apache2
+```
+
+> The admin subdomain does **not** need an `/api` proxy — it calls the absolute
+> `https://helpr.example.com/api` base you set in `.env.production`. That
+> cross-origin call is allowed by the CORS whitelist from step 1, and the admin
+> sends its session as an `Authorization: Bearer` header.
+
+---
+
 ## 9. Enable HTTPS (Let's Encrypt)
 
 ```bash
 sudo apt install -y certbot python3-certbot-apache
-sudo certbot --apache -d helpr.example.com
+# Include the admin subdomain so it also gets a certificate
+sudo certbot --apache -d helpr.example.com -d admin.helpr.example.com
 ```
 
 Certbot rewrites the vhost to add the `:443` block and HTTP→HTTPS redirect.
@@ -260,8 +350,12 @@ git pull
 # Backend
 cd backend/db && npm ci && npm run build && pm2 restart helpr-backend
 
-# Frontend
+# Frontend (storefront)
 cd /var/www/helpr && npm ci && npm run build
+
+# Admin console
+cd /var/www/helpr/admin && npm ci && npm run build
+
 sudo systemctl reload apache2
 ```
 
@@ -274,3 +368,6 @@ sudo systemctl reload apache2
 - **API works on server but not browser** → frontend still pointing at `localhost:3001`; revisit Step 5 and rebuild.
 - **DB connection errors** → check `.env.local` credentials and `sudo systemctl status mysql`.
 - **Firewall** → ensure ports 80/443 are open (`sudo ufw allow 'Apache Full'`); keep 3001 internal only.
+- **Admin can't reach API / CORS error in console** → the production admin origin (e.g. `https://admin.helpr.example.com`) is missing from `allowedOrigins` in `backend/db/src/middleware.ts`; add it, rebuild, `pm2 restart helpr-backend`.
+- **Admin API calls hit `localhost:3001`** → `admin/.env.production` missing or admin not rebuilt; set `VITE_API_BASE` and `npm run build` in `admin/`.
+- **Broken service images in admin** → `VITE_API_BASE` should point at the main domain (`https://helpr.example.com/api`) so images resolve to that host's `/images`.

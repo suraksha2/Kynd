@@ -278,7 +278,6 @@ export default function Header() {
             )}
             <a href="/#how" className="block py-2">How it works</a>
             <a href="/#faq" className="block py-2">FAQs</a>
-            <Link to="/admin" className="block py-2">Admin</Link>
             <MobileAuthLinks />
           </div>
         )}

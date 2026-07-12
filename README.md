@@ -1,4 +1,4 @@
-# Kleen — Trusted house help app
+# Kynd — Trusted house help app
 
 Vite + React + Tailwind landing page wrapped with Capacitor for Android/iOS.
 

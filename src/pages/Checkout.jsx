@@ -113,7 +113,7 @@ export default function Checkout() {
     if (!response.ok) {
       throw new Error(data.error || 'Failed to create booking')
     }
-    try { localStorage.setItem('helpr.lastOrder', JSON.stringify(order)) } catch {}
+    try { localStorage.setItem('kynd.lastOrder', JSON.stringify(order)) } catch {}
     addBooking(order)
     clear()
     navigate('/booking/confirmed', { state: order, replace: true })
@@ -157,7 +157,7 @@ export default function Checkout() {
 
       // Store order data for verification after payment redirect
       try {
-        localStorage.setItem('helpr.pendingOrder', JSON.stringify({
+        localStorage.setItem('kynd.pendingOrder', JSON.stringify({
           bookingId: order.bookingId,
           intentId: data.id,
           order,
@@ -283,7 +283,7 @@ export default function Checkout() {
               <div className="mt-3 flex justify-between font-bold text-neutral-900">
                 <span>Total</span><span>S${subtotal.toFixed(2)}</span>
               </div>
-              <button disabled={submitting} className="mt-5 w-full rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold py-3 transition">
+              <button disabled={submitting} className="mt-5 w-full rounded-full bg-brand-400 hover:bg-brand-500 disabled:opacity-60 text-cocoa font-semibold py-3 transition">
                 {submitting
                   ? 'Processing…'
                   : pay === 'cod'

@@ -30,70 +30,63 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-emerald-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-gray-100">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-brand-600 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <Lock size={32} className="text-white" />
-            </div>
+    <section className="pt-28 md:pt-32 pb-16 min-h-screen">
+      <div className="max-w-md mx-auto px-5 sm:px-6">
+        <div className="bg-white rounded-3xl ring-1 ring-neutral-100 shadow-soft p-6 sm:p-8">
+          <div className="text-center">
+            <h1 className="text-cocoa font-extrabold text-3xl tracking-tight">Kynd</h1>
+            <h2 className="mt-4 text-2xl sm:text-3xl font-extrabold text-neutral-900">Welcome back</h2>
+            <p className="mt-1.5 text-sm text-neutral-500">Sign in to manage orders, services, and providers.</p>
           </div>
 
-          <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-2">
-            Helpr Admin
-          </h1>
-          <p className="text-gray-500 text-center mb-8">
-            Sign in to manage orders, services, and providers
-          </p>
-
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-              <AlertCircle size={16} className="text-red-600" />
-              <span className="text-sm text-red-700">{error}</span>
+            <div className="mt-5 rounded-xl bg-red-50 text-red-700 text-sm px-4 py-2.5 ring-1 ring-red-100">
+              {error}
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="space-y-5" noValidate>
+          <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label htmlFor="email" className="block text-xs font-semibold text-neutral-700 mb-1.5">Email</label>
               <div className="relative">
-                <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
+                  id="email"
                   type="email"
+                  inputMode="email"
                   autoComplete="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@example.com"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
-                  required
+                  className="w-full rounded-xl border border-neutral-200 bg-white pl-10 pr-3 py-3 text-sm focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="block text-xs font-semibold text-neutral-700">Password</label>
+              </div>
               <div className="relative">
-                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
+                  id="password"
                   type={showPwd ? 'text' : 'password'}
                   autoComplete="current-password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-11 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
-                  required
+                  className="w-full rounded-xl border border-neutral-200 bg-white pl-10 pr-11 py-3 text-sm focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd((s) => !s)}
                   aria-label={showPwd ? 'Hide password' : 'Show password'}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:text-neutral-700"
                 >
-                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -101,14 +94,14 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-emerald-500 text-white font-bold py-3 rounded-xl hover:from-brand-700 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 hover:bg-brand-500 disabled:opacity-60 disabled:cursor-not-allowed text-cocoa font-semibold py-3 transition"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

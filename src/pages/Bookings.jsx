@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, MapPin, ChevronRight, ShoppingBag, CheckCircle2, XCircle, Repeat, Zap } from 'lucide-react'
 import { useBookings } from '../context/BookingsContext'
+import { iconForService } from '../lib/serviceIcon'
 
 function StatusPill({ booking }) {
   if (booking.status === 'cancelled') {
@@ -30,14 +31,15 @@ function whenLabel(b) {
 function BookingCard({ booking }) {
   const firstItem = booking.items?.[0]
   const extra = (booking.items?.length || 1) - 1
+  const BookingIcon = firstItem?.name ? iconForService(firstItem.name) : ShoppingBag
   return (
     <Link
       to={`/bookings/${booking.bookingId}`}
       className="block rounded-2xl bg-white ring-1 ring-neutral-100 hover:ring-brand-200 hover:shadow-soft transition p-4"
     >
       <div className="flex items-start gap-3">
-        {firstItem?.img ? (
-          <img src={firstItem.img} alt="" className="w-14 h-14 rounded-xl object-cover bg-neutral-100" />
+        {firstItem?.name ? (
+          <BookingIcon className="w-14 h-14 rounded-xl bg-neutral-100 p-3 text-cocoa shrink-0" strokeWidth={1.5} />
         ) : (
           <div className="w-14 h-14 rounded-xl bg-brand-50 text-brand-700 grid place-items-center">
             <ShoppingBag className="w-5 h-5" />
@@ -114,7 +116,7 @@ export default function Bookings() {
               <p className="mt-1 text-sm text-neutral-500">
                 {tab === 'upcoming' ? 'Book a service to see it here.' : 'Completed and cancelled bookings will appear here.'}
               </p>
-              <Link to="/services" className="mt-4 inline-flex rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2 text-sm">
+              <Link to="/services" className="mt-4 inline-flex rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold px-5 py-2 text-sm">
                 Browse services
               </Link>
             </div>

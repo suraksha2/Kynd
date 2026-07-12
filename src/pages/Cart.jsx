@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Trash2, Minus, Plus, ShoppingBag, Zap, Calendar, Repeat } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useServices } from '../context/ServicesContext'
+import { iconForService } from '../lib/serviceIcon'
 
 const ScheduleOption = ({ value, current, onChange, icon: Icon, title, sub }) => {
   const active = current === value
@@ -13,7 +14,7 @@ const ScheduleOption = ({ value, current, onChange, icon: Icon, title, sub }) =>
       className={`text-left rounded-2xl border p-4 transition w-full ${active ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-600/20' : 'border-neutral-200 bg-white hover:border-brand-300'}`}
     >
       <div className="flex items-center gap-2">
-        <span className={`w-9 h-9 grid place-items-center rounded-full ${active ? 'bg-brand-600 text-white' : 'bg-neutral-100 text-neutral-700'}`}>
+        <span className={`w-9 h-9 grid place-items-center rounded-full ${active ? 'bg-brand-400 text-cocoa' : 'bg-neutral-100 text-neutral-700'}`}>
           <Icon className="w-4 h-4" />
         </span>
         <div className="font-semibold text-neutral-900 text-sm">{title}</div>
@@ -53,7 +54,7 @@ export default function Cart() {
           </div>
           <h1 className="mt-5 text-3xl md:text-4xl font-extrabold text-neutral-900">Your cart is empty</h1>
           <p className="mt-3 text-neutral-500">Pick from 18 trusted services and stack them into one booking.</p>
-          <Link to="/services" className="mt-6 inline-flex items-center justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3">
+          <Link to="/services" className="mt-6 inline-flex items-center justify-center rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold px-6 py-3">
             Browse services
           </Link>
         </div>
@@ -80,7 +81,10 @@ export default function Cart() {
                 <div key={it.slug} className="p-4">
                   {/* Top: image + name + remove */}
                   <div className="flex gap-3 items-start">
-                    <img src={it.img} alt={it.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover bg-neutral-100 shrink-0" />
+                    {(() => {
+                      const Icon = iconForService(it.name)
+                      return <Icon className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-neutral-100 shrink-0 p-3 text-cocoa" strokeWidth={1.5} />
+                    })()}
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-neutral-900 text-sm leading-snug break-words">{it.name}</div>
                       <div className="text-xs text-neutral-500 mt-0.5">{it.duration} · S${it.priceFrom.toFixed(2)} each</div>
@@ -129,7 +133,7 @@ export default function Cart() {
                 <label className="block text-xs font-semibold text-neutral-700 mb-1.5">Cadence</label>
                 <div className="flex flex-wrap gap-2">
                   {['daily', 'weekly', 'biweekly', 'monthly'].map(c => (
-                    <button key={c} onClick={() => setCadence(c)} className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize ${cadence === c ? 'bg-brand-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}>{c}</button>
+                    <button key={c} onClick={() => setCadence(c)} className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize ${cadence === c ? 'bg-brand-400 text-cocoa' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}>{c}</button>
                   ))}
                 </div>
               </div>
@@ -150,7 +154,7 @@ export default function Cart() {
               </div>
               <button
                 onClick={proceed}
-                className="mt-5 w-full rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 transition"
+                className="mt-5 w-full rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold py-3 transition"
               >
                 Continue to checkout
               </button>

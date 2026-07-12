@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { SESSION_COOKIE_NAME, hasAdminAccess, verifySessionToken } from '@/lib/auth'
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+  createSessionToken,
+  hasAdminAccess,
+  verifySessionToken,
+  type SessionPayload,
+} from '@/lib/auth'
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -8,6 +15,10 @@ const allowedOrigins = [
   // Standalone admin console (separate Vite app / Node process).
   'http://localhost:5174',
   'http://127.0.0.1:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5175',
+  'http://localhost:5176',
+  'http://127.0.0.1:5176',
 ]
 
 // Page routes that anyone may reach without an admin session.
@@ -21,6 +32,30 @@ function getSessionToken(request: NextRequest): string | undefined {
     return authHeader.slice(7).trim()
   }
   return request.cookies.get(SESSION_COOKIE_NAME)?.value
+}
+
+// Re-issue the session cookie with a fresh expiry so that actively browsing
+// admins are not silently logged out mid-session (sliding session). Without
+// this, the httpOnly cookie expires after a fixed window even while the user
+// is active, and the next navigation bounces them to /login even though the
+// client (localStorage) still believes they are signed in.
+async function refreshSessionCookie(
+  response: NextResponse,
+  session: SessionPayload
+): Promise<NextResponse> {
+  const token = await createSessionToken({
+    id: session.id,
+    email: session.email,
+    role: session.role,
+  })
+  response.cookies.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    path: '/',
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  })
+  return response
 }
 
 function applyCors(response: NextResponse, origin: string | null): NextResponse {
@@ -98,17 +133,15 @@ export async function middleware(request: NextRequest) {
   }
 
   const token = getSessionToken(request)
-  console.log('Middleware: pathname=', pathname, 'token=', token ? 'present' : 'missing')
   const session = await verifySessionToken(token)
-  console.log('Middleware: session=', session ? JSON.stringify(session) : 'null')
 
   if (!session || !hasAdminAccess(session.role)) {
-    console.log('Middleware: redirecting to login')
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }
 
-  return NextResponse.next()
+  // Keep the session alive while the admin is actively navigating.
+  return refreshSessionCookie(NextResponse.next(), session)
 }
 
 export const config = {

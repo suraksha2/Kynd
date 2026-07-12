@@ -24,14 +24,14 @@ export default function Support() {
     {
       icon: mailOutline,
       title: 'Email us',
-      detail: 'help@withhelpr.com',
-      href: 'mailto:help@withhelpr.com',
+      detail: 'help@getkynd.app',
+      href: 'mailto:help@getkynd.app',
       cta: 'Compose mail',
     },
     {
       icon: chatbubblesOutline,
       title: 'In-app chat',
-      detail: 'Open the Helpr app',
+      detail: 'Open the Kynd app',
       href: '#',
       cta: 'Launch chat',
     },
@@ -40,7 +40,7 @@ export default function Support() {
   return (
     <div>
       <PageHero
-        title="Get in touch with Helpr"
+        title="Get in touch with Kynd"
         subtitle="Our support team is available on call and email."
       />
 

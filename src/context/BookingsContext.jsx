@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const BookingsContext = createContext(null)
-const STORAGE_KEY = 'helpr.bookings.v1'
+const STORAGE_KEY = 'kynd.bookings.v1'
 
 const readStore = () => {
   try {

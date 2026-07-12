@@ -1,4 +1,4 @@
-// All 15 Helpr cities (matched to withhelpr.com)
+// All 15 Kynd cities
 // `img` references either a local file under /images/cities/<slug>.webp
 // (drop one in to override) or falls back to a curated Unsplash URL.
 const u = (id, w = 1200) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`

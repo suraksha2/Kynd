@@ -2,7 +2,7 @@ import PhoneMockup from '../PhoneMockup'
 
 export default function Steps() {
   const steps = [
-    { n: 'STEP 1', t: 'Pick from 18 trusted services', d: 'Browse 18 services in the Helpr app — from hourly bookings to per-task jobs to express cleans.', screen: 'list' },
+    { n: 'STEP 1', t: 'Pick from 18 trusted services', d: 'Browse 18 services in the Kynd app — from hourly bookings to per-task jobs to express cleans.', screen: 'list' },
     { n: 'STEP 2', t: 'Add it to your cart', d: 'Stack multiple tasks into one booking. Your Pro handles them all in a single visit.', screen: 'book' },
     { n: 'STEP 3', t: 'Choose instant, scheduled, or recurring. Pay & done!', d: 'Get a Pro in minutes, book for later, or set up a recurring slot.', screen: 'track' }
   ]

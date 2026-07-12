@@ -1,4 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useAuth } from './context/AuthContext'
+import { useCart } from './context/CartContext'
 import MainLayout from './layouts/MainLayout'
 import Home from './pages/Home'
 import Services from './pages/Services'
@@ -20,10 +23,29 @@ import Account from './pages/Account'
 import Bookings from './pages/Bookings'
 import BookingDetail from './pages/BookingDetail'
 
+// Sync user ID from AuthContext to CartContext for per-user cart persistence
+function AuthCartSync() {
+  const { user } = useAuth()
+  const { setUserIdFromAuth } = useCart()
+  useEffect(() => {
+    setUserIdFromAuth(user?.id || null)
+  }, [user?.id, setUserIdFromAuth])
+  return null
+}
+
 export default function App() {
   return (
-    <Routes>
-      <Route element={<MainLayout />}>
+    <>
+      <AuthCartSync />
+      <Routes>
+        {/* Auth pages without header */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Main app with header */}
+        <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/services/:slug" element={<ServiceDetail />} />
@@ -35,10 +57,6 @@ export default function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/booking/confirmed" element={<BookingConfirmed />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
         <Route path="/account" element={<Account />} />
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/bookings/:id" element={<BookingDetail />} />
@@ -48,6 +66,7 @@ export default function App() {
         <Route path="/credits" element={<Credits />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }

@@ -19,7 +19,7 @@ export default function DeleteAccount() {
   return (
     <div>
       <PageHero
-        title="Delete your Helpr account"
+        title="Delete your Kynd account"
         subtitle="We're sorry to see you go."
       />
       <section className="py-14">
@@ -27,7 +27,7 @@ export default function DeleteAccount() {
           <IonCard className="rounded-2xl">
             <IonCardContent>
               <p className="mb-3 font-semibold text-brand-900">
-                To delete your Helpr account and associated data, please follow
+                To delete your Kynd account and associated data, please follow
                 either of the steps below:
               </p>
 
@@ -36,15 +36,15 @@ export default function DeleteAccount() {
                   <IonIcon icon={personCircleOutline} slot="start" color="success" />
                   <IonLabel className="ion-text-wrap">
                     <h3>In-app</h3>
-                    <p>Open the Helpr app → Profile → Settings → Delete account.</p>
+                    <p>Open the Kynd app → Profile → Settings → Delete account.</p>
                   </IonLabel>
                 </IonItem>
-                <IonItem href="mailto:help@withhelpr.com">
+                <IonItem href="mailto:help@getkynd.app">
                   <IonIcon icon={mailOutline} slot="start" color="success" />
                   <IonLabel className="ion-text-wrap">
                     <h3>Email request</h3>
                     <p>
-                      Write to <strong>help@withhelpr.com</strong> from the email
+                      Write to <strong>help@getkynd.app</strong> from the email
                       registered with your account.
                     </p>
                   </IonLabel>
@@ -63,7 +63,7 @@ export default function DeleteAccount() {
               <IonButton
                 expand="block"
                 color="danger"
-                href="mailto:help@withhelpr.com?subject=Delete%20my%20Helpr%20account"
+                href="mailto:help@getkynd.app?subject=Delete%20my%20Kynd%20account"
                 className="mt-4"
               >
                 Request account deletion

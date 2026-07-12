@@ -8,8 +8,8 @@ const PhoneAppScreen = ({ variant = 'home' }) => {
   if (variant === 'list') {
     return (
       <div className="bg-white h-full flex flex-col text-[10px]">
-        <div className="bg-brand-600 text-white px-3 py-3 flex items-center justify-between">
-          <div className="font-semibold">Helpr</div>
+        <div className="bg-brand-400 text-cocoa px-3 py-3 flex items-center justify-between">
+          <div className="font-semibold">Kynd</div>
           <Bell className="w-3 h-3" />
         </div>
         <div className="p-3 space-y-2">
@@ -35,7 +35,7 @@ const PhoneAppScreen = ({ variant = 'home' }) => {
   if (variant === 'book') {
     return (
       <div className="bg-white h-full flex flex-col text-[10px]">
-        <div className="bg-brand-600 text-white px-3 py-3 font-semibold">Confirm booking</div>
+        <div className="bg-brand-400 text-cocoa px-3 py-3 font-semibold">Confirm booking</div>
         <div className="p-3 space-y-2 flex-1">
           <div className="rounded-lg bg-neutral-50 p-2">
             <div className="font-semibold">Bathroom Cleaning</div>
@@ -45,14 +45,14 @@ const PhoneAppScreen = ({ variant = 'home' }) => {
             <span>Total</span><span className="font-semibold">S$249</span>
           </div>
         </div>
-        <div className="p-3"><div className="bg-brand-600 text-white text-center rounded-lg py-2 font-semibold">Book now</div></div>
+        <div className="p-3"><div className="bg-brand-400 text-cocoa text-center rounded-lg py-2 font-semibold">Book now</div></div>
       </div>
     )
   }
   if (variant === 'track') {
     return (
       <div className="bg-white h-full flex flex-col text-[10px]">
-        <div className="bg-brand-600 text-white px-3 py-3 font-semibold">Tracking</div>
+        <div className="bg-brand-400 text-cocoa px-3 py-3 font-semibold">Tracking</div>
         <div className="p-3 space-y-2 flex-1">
           <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-brand-600" /><span>Booking confirmed</span></div>
           <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-brand-600" /><span>Pro assigned</span></div>
@@ -68,7 +68,7 @@ const PhoneAppScreen = ({ variant = 'home' }) => {
   }
   return (
     <div className="bg-white h-full flex flex-col text-[10px]">
-      <div className="bg-brand-600 text-white px-3 pt-4 pb-5">
+      <div className="bg-brand-400 text-cocoa px-3 pt-4 pb-5">
         <div className="flex items-center justify-between">
           <div>
             <div className="opacity-80">Hello,</div>

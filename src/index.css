@@ -42,10 +42,10 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: '"Plus Jakarta Sans"', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  color: #0f172a;
-  background: #ffffff;
+  color: #4a2e1f;
+  background: #fff7eb;
 }
 
 /* App store badge buttons */
@@ -78,6 +78,6 @@ body {
 /* subtle grid */
 .bg-grid {
   background-image:
-    radial-gradient(rgba(22,163,74,0.08) 1px, transparent 1px);
+    radial-gradient(rgba(74,46,31,0.08) 1px, transparent 1px);
   background-size: 22px 22px;
 }

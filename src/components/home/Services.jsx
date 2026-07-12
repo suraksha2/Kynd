@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
+import { iconForService } from '../../lib/serviceIcon'
 import { useCart } from '../../context/CartContext'
 
 const ServiceTile = ({ s }) => {
   const { addItem } = useCart()
   const [added, setAdded] = useState(false)
+  const Icon = iconForService(s.name)
   const handleAdd = (e) => {
     e.preventDefault(); e.stopPropagation()
     addItem(s); setAdded(true); setTimeout(() => setAdded(false), 1200)
@@ -15,18 +17,13 @@ const ServiceTile = ({ s }) => {
       to={`/services/${s.slug}`}
       className="group relative flex flex-col items-center text-center p-3"
     >
-      <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-neutral-100 group-hover:bg-brand-50 overflow-hidden grid place-items-center transition">
-        <img
-          src={s.img}
-          alt={s.name}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
-        />
+      <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-neutral-100 group-hover:bg-brand-50 grid place-items-center transition">
+        <Icon className="w-9 h-9 md:w-10 md:h-10 text-cocoa group-hover:scale-[1.08] transition duration-300" strokeWidth={1.75} />
         <button
           type="button"
           onClick={handleAdd}
           aria-label={`Add ${s.name} to cart`}
-          className={`absolute bottom-1 right-1 w-6 h-6 rounded-full grid place-items-center shadow-soft transition ${added ? 'bg-brand-600 text-white scale-110' : 'bg-white text-neutral-700 hover:bg-brand-600 hover:text-white opacity-0 group-hover:opacity-100'}`}
+          className={`absolute bottom-1 right-1 w-6 h-6 rounded-full grid place-items-center shadow-soft transition ${added ? 'bg-brand-400 text-cocoa scale-110' : 'bg-white text-neutral-700 hover:bg-brand-400 hover:text-cocoa opacity-0 group-hover:opacity-100'}`}
         >
           <Plus className="w-3.5 h-3.5" strokeWidth={3} />
         </button>
@@ -93,7 +90,7 @@ export default function Services() {
         <div className="text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-neutral-900">Book trusted house<br />help.</h2>
           <p className="mt-3 text-neutral-500 max-w-xl mx-auto">
-            From hourly bookings to express cleans to daily upkeep, Helpr's got you covered. {services.length} services, transparent flat pricing.
+            From cleaning and maintenance to childcare and elderly support, Kynd's got you covered. {services.length} services, transparent flat pricing.
           </p>
         </div>
 
@@ -102,7 +99,7 @@ export default function Services() {
         </div>
 
         <div className="mt-10 text-center">
-          <Link to="/cart" className="inline-flex items-center justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3 transition">
+          <Link to="/cart" className="inline-flex items-center justify-center rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold px-6 py-3 transition">
             View cart & checkout
           </Link>
         </div>

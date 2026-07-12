@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const CartContext = createContext(null)
-const STORAGE_KEY = 'helpr.cart.v1'
 
 const parsePrice = (str = '') => {
   const n = parseFloat(String(str).replace(/[^0-9.]/g, ''))
@@ -9,16 +8,38 @@ const parsePrice = (str = '') => {
 }
 
 export function CartProvider({ children }) {
+  const [userId, setUserId] = useState(null)
+
+  // Get storage key based on user ID
+  const getStorageKey = (uid) => uid ? `kynd.cart.${uid}` : 'kynd.cart.guest'
+
   const [items, setItems] = useState(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const key = getStorageKey(null)
+      const raw = localStorage.getItem(key)
       return raw ? JSON.parse(raw) : []
     } catch { return [] }
   })
 
+  // Load cart when user changes
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)) } catch {}
-  }, [items])
+    const key = getStorageKey(userId)
+    try {
+      const raw = localStorage.getItem(key)
+      setItems(raw ? JSON.parse(raw) : [])
+    } catch { setItems([]) }
+  }, [userId])
+
+  // Save cart when items change
+  useEffect(() => {
+    const key = getStorageKey(userId)
+    try { localStorage.setItem(key, JSON.stringify(items)) } catch {}
+  }, [items, userId])
+
+  // Call this when user logs in/out to update the userId
+  const setUserIdFromAuth = (uid) => {
+    setUserId(uid)
+  }
 
   const addItem = (svc, qty = 1) => {
     setItems(prev => {
@@ -48,7 +69,7 @@ export function CartProvider({ children }) {
   const subtotal = useMemo(() => items.reduce((s, i) => s + i.priceFrom * i.qty, 0), [items])
   const count = useMemo(() => items.reduce((s, i) => s + i.qty, 0), [items])
 
-  const value = { items, count, subtotal, addItem, removeItem, setQty, clear }
+  const value = { items, count, subtotal, addItem, removeItem, setQty, clear, setUserIdFromAuth }
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
 

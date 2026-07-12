@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth, API_BASE } from "../context/AuthContext";
 
 // Service images are stored as relative paths (e.g. "/images/foo.webp") that
@@ -14,6 +15,7 @@ const resolveImage = (path) => {
 
 export default function AdminPanel() {
   const { token, user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -267,15 +269,13 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f7f5]">
+    <div className="min-h-screen bg-cream">
 
       {/* Navbar */}
       <header className="w-full flex items-center justify-between px-6 pt-4">
 
           {/* Logo */}
-          <h1 className="text-3xl font-bold text-green-500">
-            Helpr
-          </h1>
+          <img src="/images/logo.png" alt="Kynd" className="h-10 w-auto" />
 
           {/* Right */}
           <div className="flex items-center gap-4 text-sm text-gray-600 font-medium">
@@ -284,12 +284,15 @@ export default function AdminPanel() {
               <span className="text-xs text-gray-400">{user?.email}</span>
             </div>
 
-            <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center font-semibold text-green-700">
+            <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center font-semibold text-brand-700">
               {user?.name?.charAt(0)?.toUpperCase() || 'A'}
             </div>
 
             <button
-              onClick={logout}
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <LogOut size={16} />
@@ -304,7 +307,7 @@ export default function AdminPanel() {
 
         {/* Heading */}
         <div className="mb-8">
-          <h2 className="text-4xl font-bold text-gray-900">
+          <h2 className="text-4xl font-bold text-cocoa">
             Admin Dashboard
           </h2>
 
@@ -321,7 +324,7 @@ export default function AdminPanel() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? "bg-green-500 text-white shadow"
+                  ? "bg-brand-500 text-cocoa shadow"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -346,21 +349,21 @@ export default function AdminPanel() {
                 </div>
               ) : stats ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6">
-                    <p className="text-sm text-green-600 font-medium mb-2">Total Revenue</p>
-                    <p className="text-3xl font-bold text-green-700">S${stats.totalRevenue?.toLocaleString() || 0}</p>
+                  <div className="bg-gradient-to-br from-brand-50 to-brand-100 rounded-2xl p-6">
+                    <p className="text-sm text-brand-600 font-medium mb-2">Total Revenue</p>
+                    <p className="text-3xl font-bold text-cocoa">S${stats.totalRevenue?.toLocaleString() || 0}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6">
-                    <p className="text-sm text-blue-600 font-medium mb-2">Total Orders</p>
-                    <p className="text-3xl font-bold text-blue-700">{stats.totalOrders || 0}</p>
+                  <div className="bg-gradient-to-br from-cocoa-50 to-cocoa-100 rounded-2xl p-6">
+                    <p className="text-sm text-cocoa-600 font-medium mb-2">Total Orders</p>
+                    <p className="text-3xl font-bold text-cocoa">{stats.totalOrders || 0}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6">
-                    <p className="text-sm text-purple-600 font-medium mb-2">Total Clients</p>
-                    <p className="text-3xl font-bold text-purple-700">{stats.totalClients || 0}</p>
+                  <div className="bg-gradient-to-br from-oat to-oat/80 rounded-2xl p-6">
+                    <p className="text-sm text-cocoa-600 font-medium mb-2">Total Clients</p>
+                    <p className="text-3xl font-bold text-cocoa">{stats.totalClients || 0}</p>
                   </div>
-                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6">
-                    <p className="text-sm text-orange-600 font-medium mb-2">Growth Rate</p>
-                    <p className="text-3xl font-bold text-orange-700">{stats.growthRate?.toFixed(1) || 0}%</p>
+                  <div className="bg-gradient-to-br from-brand-200 to-brand-100 rounded-2xl p-6">
+                    <p className="text-sm text-brand-700 font-medium mb-2">Growth Rate</p>
+                    <p className="text-3xl font-bold text-cocoa">{stats.growthRate?.toFixed(1) || 0}%</p>
                   </div>
                 </div>
               ) : (
@@ -404,14 +407,14 @@ export default function AdminPanel() {
                     {orders.map((order) => (
                       <div key={order.id} className="grid grid-cols-[minmax(0,1fr)_140px_100px_140px] items-center gap-4 p-4 bg-gray-50 rounded-xl">
                         <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-semibold shrink-0">
                             {order.clientName?.charAt(0) || 'U'}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">{order.clientName || 'Unknown'}</p>
                             <p className="text-sm text-gray-500 truncate">{order.city || 'Unknown City'}</p>
                             {order.providerName && (
-                              <p className="text-sm text-purple-600 font-medium truncate">
+                              <p className="text-sm text-cocoa-600 font-medium truncate">
                                 Provider: {order.providerName}
                               </p>
                             )}
@@ -422,7 +425,7 @@ export default function AdminPanel() {
                           <p className="text-sm text-gray-500">{new Date(order.date).toLocaleDateString()}</p>
                         </div>
                         <div className="flex justify-center">
-                          <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                          <div className="px-3 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-700">
                             {order.status || 'Pending'}
                           </div>
                         </div>
@@ -431,7 +434,7 @@ export default function AdminPanel() {
                             setSelectedOrder(order);
                             setShowAssignModal(true);
                           }}
-                          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors justify-self-end"
+                          className="px-4 py-2 bg-brand-500 text-cocoa rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors justify-self-end"
                         >
                           {order.providerName ? 'Reassign' : 'Assign Provider'}
                         </button>
@@ -475,9 +478,9 @@ export default function AdminPanel() {
                       <h3 className="font-semibold text-gray-900">{service.name}</h3>
                       <p className="text-sm text-gray-500">{service.category}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <p className="font-bold text-green-600">S${service.price?.toLocaleString() || 0}</p>
+                        <p className="font-bold text-brand-600">S${service.price?.toLocaleString() || 0}</p>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          service.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          service.status === 'Available' ? 'bg-brand-100 text-brand-700' : 'bg-red-100 text-red-700'
                         }`}>
                           {service.status}
                         </span>
@@ -496,7 +499,7 @@ export default function AdminPanel() {
                 <h3 className="text-xl font-bold text-gray-900">Service Providers</h3>
                 <button
                   onClick={() => setShowAddProviderModal(true)}
-                  className="px-4 py-2 bg-purple-500 text-white rounded-xl text-sm font-medium hover:bg-purple-600 transition-colors"
+                  className="px-4 py-2 bg-brand-500 text-cocoa rounded-xl text-sm font-medium hover:bg-brand-600 transition-colors"
                 >
                   Add Provider
                 </button>
@@ -522,7 +525,7 @@ export default function AdminPanel() {
                   {providers.map((provider) => (
                     <div key={provider.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold text-lg">
+                        <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-semibold text-lg">
                           {provider.name?.charAt(0) || 'P'}
                         </div>
                         <div>
@@ -539,7 +542,7 @@ export default function AdminPanel() {
                         <p className="text-sm text-gray-500">{provider.total_jobs || 0} jobs</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        provider.status === 'active' ? 'bg-green-100 text-green-700' :
+                        provider.status === 'active' ? 'bg-brand-100 text-brand-700' :
                         provider.status === 'busy' ? 'bg-orange-100 text-orange-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>
@@ -575,7 +578,7 @@ export default function AdminPanel() {
                   {clients.map((client) => (
                     <div key={client.id} className="grid grid-cols-[minmax(0,1fr)_160px_120px] items-center gap-4 p-4 bg-gray-50 rounded-xl">
                       <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-semibold shrink-0">
                           {client.avatar || client.name?.charAt(0) || 'U'}
                         </div>
                         <div className="min-w-0">
@@ -588,7 +591,7 @@ export default function AdminPanel() {
                         <p className="text-sm text-gray-500">S${(client.totalSpend || 0).toLocaleString()}</p>
                       </div>
                       <span className={`justify-self-end px-3 py-1 rounded-full text-xs font-medium ${
-                        client.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        client.status === 'Active' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-700'
                       }`}>
                         {client.status || 'Active'}
                       </span>
@@ -623,7 +626,7 @@ export default function AdminPanel() {
                       className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-semibold">
                           {provider.name?.charAt(0) || 'P'}
                         </div>
                         <div className="text-left">
@@ -671,7 +674,7 @@ export default function AdminPanel() {
                   type="text"
                   value={newProvider.name}
                   onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Enter provider name"
                 />
               </div>
@@ -682,7 +685,7 @@ export default function AdminPanel() {
                   type="email"
                   value={newProvider.email}
                   onChange={(e) => setNewProvider({ ...newProvider, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Enter email"
                 />
               </div>
@@ -693,7 +696,7 @@ export default function AdminPanel() {
                   type="text"
                   value={newProvider.mobile}
                   onChange={(e) => setNewProvider({ ...newProvider, mobile: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Enter mobile number"
                 />
               </div>
@@ -725,14 +728,14 @@ export default function AdminPanel() {
                     {newProvider.services.map((name) => (
                       <span
                         key={name}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-700"
                       >
                         {name}
                         <button
                           type="button"
                           onClick={() => toggleService(name)}
                           aria-label={`Remove ${name}`}
-                          className="text-purple-500 hover:text-purple-800 leading-none"
+                          className="text-brand-500 hover:text-brand-800 leading-none"
                         >
                           ×
                         </button>
@@ -747,7 +750,7 @@ export default function AdminPanel() {
                 <select
                   value={newProvider.city}
                   onChange={(e) => setNewProvider({ ...newProvider, city: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
                   <option value="">Select city</option>
                   {availableCities.length === 0 ? (
@@ -767,7 +770,7 @@ export default function AdminPanel() {
                 <select
                   value={newProvider.status}
                   onChange={(e) => setNewProvider({ ...newProvider, status: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -795,7 +798,7 @@ export default function AdminPanel() {
               </button>
               <button
                 onClick={addProvider}
-                className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 transition-colors"
+                className="flex-1 px-4 py-2 bg-brand-500 text-cocoa rounded-xl font-medium hover:bg-brand-600 transition-colors"
               >
                 Add Provider
               </button>

@@ -6,7 +6,7 @@ export default function Stats() {
           No more planning<br />around your house help.
         </h2>
         <p className="mt-3 text-neutral-500 max-w-xl mx-auto">
-          Our team of verified Helpr Professionals are always on time.
+          Our team of verified Kynd Professionals are always on time.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           {[

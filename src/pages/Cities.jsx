@@ -41,7 +41,7 @@ export default function Cities() {
 
   if (loading) {
     return (
-      <div className="pt-32 pb-20 bg-[#eaf6ee] min-h-[60vh]">
+      <div className="pt-32 pb-20 bg-cream min-h-[60vh]">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mt-3">
             Loading cities...
@@ -52,14 +52,14 @@ export default function Cities() {
   }
 
   return (
-    <div className="pt-32 pb-20 bg-[#eaf6ee] min-h-[60vh]">
+    <div className="pt-32 pb-20 bg-cream min-h-[60vh]">
       <div className="max-w-6xl mx-auto px-6 text-center">
         <IonChip color="success" outline>
           <IonIcon icon={locationOutline} />
           <IonLabel>{cities.length} cities live</IonLabel>
         </IonChip>
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mt-3">
-          Helpr is live in {cities.length} cities
+          Kynd is live in {cities.length} cities
         </h1>
         <p className="mt-3 text-neutral-600 max-w-xl mx-auto">
           Pick your city to see availability and serviced localities.
@@ -80,7 +80,7 @@ export default function Cities() {
                     <div className="flex items-center gap-2">
                       <IonIcon
                         icon={locationOutline}
-                        style={{ color: 'var(--ion-color-success, #16a34a)' }}
+                        style={{ color: 'var(--ion-color-success, #e6ac1f)' }}
                       />
                       <span className="font-semibold text-brand-900">{c.name}</span>
                     </div>

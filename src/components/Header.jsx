@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ChevronDown, Menu, X, ShoppingBag, User, LogOut } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
@@ -7,6 +7,7 @@ import { useServices } from '../context/ServicesContext'
 
 function AuthButton({ compact = false }) {
   const { user, isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const timer = useRef(null)
   const onEnter = () => { clearTimeout(timer.current); setOpen(true) }
@@ -16,7 +17,7 @@ function AuthButton({ compact = false }) {
     return (
       <Link
         to="/login"
-        className={`inline-flex items-center justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold transition ${compact ? 'px-3 h-9 text-xs' : 'px-4 py-2 text-sm'}`}
+        className={`inline-flex items-center justify-center rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold transition ${compact ? 'px-3 h-9 text-xs' : 'px-4 py-2 text-sm'}`}
       >
         Sign in
       </Link>
@@ -43,14 +44,14 @@ function AuthButton({ compact = false }) {
       </button>
       {open && (
         <div className="absolute right-0 top-full pt-3 z-30">
-          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(20,83,45,0.25)] ring-1 ring-black/5 p-3 min-w-[220px]">
+          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(74,46,31,0.25)] ring-1 ring-black/5 p-3 min-w-[220px]">
             <div className="px-2 py-1.5">
               <div className="text-sm font-semibold text-neutral-900 truncate">{user?.name}</div>
               <div className="text-xs text-neutral-500 truncate">{user?.email}</div>
             </div>
             <div className="mt-2 pt-2 border-t border-neutral-100">
               <button
-                onClick={() => { logout(); setOpen(false) }}
+                onClick={() => { logout(); navigate('/login'); setOpen(false) }}
                 className="w-full flex items-center gap-2 text-sm text-neutral-700 hover:bg-brand-50 hover:text-brand-700 rounded-md px-2 py-1.5 transition"
               >
                 <LogOut className="w-4 h-4" /> Sign out
@@ -65,6 +66,7 @@ function AuthButton({ compact = false }) {
 
 function MobileAuthLinks() {
   const { user, isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
   if (isAuthenticated) {
     return (
       <div className="mt-2 pt-3 border-t border-neutral-100">
@@ -72,7 +74,7 @@ function MobileAuthLinks() {
           <div className="text-sm font-semibold text-neutral-900 truncate">{user?.name}</div>
           <div className="text-xs text-neutral-500 truncate">{user?.email}</div>
         </div>
-        <button onClick={logout} className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">
+        <button onClick={() => { logout(); navigate('/login') }} className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">
           <LogOut className="w-4 h-4" /> Sign out
         </button>
       </div>
@@ -83,7 +85,7 @@ function MobileAuthLinks() {
       <Link to="/login" className="inline-flex items-center justify-center rounded-full bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold py-2.5 text-sm">
         Sign in
       </Link>
-      <Link to="/signup" className="inline-flex items-center justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 text-sm">
+      <Link to="/signup" className="inline-flex items-center justify-center rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold py-2.5 text-sm">
         Sign up
       </Link>
     </div>
@@ -96,7 +98,7 @@ function CartButton({ className = '' }) {
     <Link to="/cart" aria-label="Cart" className={`relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-brand-50 hover:bg-brand-100 text-brand-700 transition ${className}`}>
       <ShoppingBag className="w-4 h-4" />
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-brand-600 text-white text-[10px] font-bold">
+        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-cocoa text-white text-[10px] font-bold">
           {count}
         </span>
       )}
@@ -125,7 +127,7 @@ function NavDropdown({ label, children, align = 'left' }) {
         <div
           className={`absolute top-full pt-3 ${align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'} z-30`}
         >
-          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(20,83,45,0.25)] ring-1 ring-black/5 p-4 min-w-[640px]">
+          <div className="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(74,46,31,0.25)] ring-1 ring-black/5 p-4 min-w-[640px]">
             {children}
           </div>
         </div>
@@ -210,7 +212,7 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="max-w-5xl mx-auto px-4">
-        <nav className="bg-white rounded-full shadow-[0_10px_30px_-12px_rgba(20,83,45,0.18)] ring-1 ring-black/5 px-5 md:px-7 py-3 flex items-center justify-between gap-4">
+        <nav className="bg-white rounded-full shadow-[0_10px_30px_-12px_rgba(74,46,31,0.18)] ring-1 ring-black/5 px-5 md:px-7 py-3 flex items-center justify-between gap-4">
           {/* Left links */}
           <div className="hidden md:flex items-center gap-6 text-[15px] font-medium text-neutral-800 flex-1">
             <NavLink to="/" end className={({ isActive }) => `hover:text-brand-700 transition ${isActive ? 'text-brand-700' : ''}`}>
@@ -221,8 +223,8 @@ export default function Header() {
           </div>
 
           {/* Logo */}
-          <Link to="/" className="text-brand-500 font-extrabold text-2xl md:text-3xl tracking-tight leading-none select-none">
-            Helpr
+          <Link to="/" className="flex items-center gap-0">
+            <img src="/images/logo.png" alt="Kynd" className="h-10 md:h-11 w-auto" />
           </Link>
 
           {/* Right links */}

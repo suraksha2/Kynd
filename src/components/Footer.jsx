@@ -28,18 +28,20 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer className="bg-[#0b1f14] text-neutral-300">
+    <footer className="bg-cocoa-900 text-neutral-300">
       <div className="max-w-6xl mx-auto px-6 py-14">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-sm">
           <div className="col-span-2">
-            <div className="text-brand-500 text-2xl font-extrabold">Helpr</div>
+            <div className="flex items-center gap-0 text-white text-2xl font-extrabold">
+              <img src="/images/logo2.png" alt="Kynd" className="h-10 w-auto" />
+            </div>
             <p className="mt-3 text-neutral-400 max-w-xs">
-              Trusted house help in minutes. Download the app and book your first service today.
+              Trusted help, kindly done. Download the app and book your first service today.
             </p>
             <p className="mt-4 text-neutral-400">
               Reach us:<br />
-              <a className="text-white hover:underline" href="mailto:help@withhelpr.com">help@withhelpr.com</a><br />
-              Careers: <a className="text-white hover:underline" href="mailto:careers@withhelpr.com">careers@withhelpr.com</a>
+              <a className="text-white hover:underline" href="mailto:help@getkynd.app">help@getkynd.app</a><br />
+              Careers: <a className="text-white hover:underline" href="mailto:careers@getkynd.app">careers@getkynd.app</a>
             </p>
           </div>
 
@@ -55,9 +57,9 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-3">Company</h4>
             <ul className="space-y-2 text-neutral-400">
-              <li><a href="#" className="hover:text-white">Become a Helpr Pro</a></li>
-              <li><a href="#" className="hover:text-white">Become a Helpr Buddy</a></li>
-              <li><a href="#" className="hover:text-white">Request Helpr in your locality</a></li>
+              <li><a href="#" className="hover:text-white">Become a Kynd Pro</a></li>
+              <li><a href="#" className="hover:text-white">Become a Kynd Buddy</a></li>
+              <li><a href="#" className="hover:text-white">Request Kynd in your locality</a></li>
             </ul>
           </div>
 
@@ -96,7 +98,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/10 text-xs text-neutral-500">
-          Helpr © {new Date().getFullYear()}
+          Kynd © {new Date().getFullYear()}
         </div>
       </div>
     </footer>

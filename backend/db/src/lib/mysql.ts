@@ -1,14 +1,27 @@
 import mysql from 'mysql2/promise';
 
-// Update these values with your MySQL server credentials
-const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || 'root123',
-  database: process.env.MYSQL_DATABASE || 'urban_service',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+// In development, Next.js hot-reloads re-evaluate this module on every change.
+// Creating a new pool each time leaks connections until MySQL hits
+// max_connections and every query fails with "Too many connections".
+// Cache a single pool on globalThis so hot reloads reuse it.
+const globalForMysql = globalThis as unknown as {
+  mysqlPool?: mysql.Pool;
+};
+
+const pool =
+  globalForMysql.mysqlPool ??
+  mysql.createPool({
+    host: process.env.MYSQL_HOST || 'localhost',
+    user: process.env.MYSQL_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || 'root123',
+    database: process.env.MYSQL_DATABASE || 'urban_service',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForMysql.mysqlPool = pool;
+}
 
 export default pool;

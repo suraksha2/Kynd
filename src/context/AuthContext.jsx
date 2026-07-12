@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
 const AuthContext = createContext(null)
-const USER_KEY = 'helpr.auth.user.v1'
+const USER_KEY = 'kynd.auth.user.v1'
 const API_BASE = 'http://localhost:3001/api'
 
 export function AuthProvider({ children }) {

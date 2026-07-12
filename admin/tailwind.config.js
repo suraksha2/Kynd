@@ -4,22 +4,39 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif']
       },
       colors: {
+        // Kynd brand — butter yellow ramp (primary)
         brand: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d'
-        }
+          50:  '#fffaf0',
+          100: '#fff2d6',
+          200: '#ffe6ad',
+          300: '#ffdd8a',
+          400: '#ffd76a',
+          500: '#f5c542',
+          600: '#e6ac1f',
+          700: '#c08c16',
+          800: '#8f6810',
+          900: '#5c430a'
+        },
+        // Cocoa brown — text / dark surfaces
+        cocoa: {
+          DEFAULT: '#4a2e1f',
+          50:  '#f6f1ee',
+          100: '#e7dad2',
+          400: '#8a6552',
+          600: '#5c3a28',
+          700: '#4a2e1f',
+          800: '#3a2418',
+          900: '#2a1a12'
+        },
+        cream: '#fff7eb',   // Soft White
+        oat:   '#e7ded1',   // Oat Beige
+        warmgrey: '#f2f2f2' // Warm Grey
       },
       boxShadow: {
-        soft: '0 10px 30px -10px rgba(20, 83, 45, 0.15)'
+        soft: '0 10px 30px -10px rgba(74, 46, 31, 0.18)'
       }
     }
   },

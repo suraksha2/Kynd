@@ -5,6 +5,7 @@ import {
   CheckCircle2, XCircle, Repeat, Zap, AlertTriangle, RotateCcw, X
 } from 'lucide-react'
 import { useBookings } from '../context/BookingsContext'
+import { iconForService } from '../lib/serviceIcon'
 
 const paymentLabel = (p) => p === 'cod' ? 'Cash after service' : p === 'upi' ? 'UPI' : p === 'card' ? 'Card' : (p || '').toUpperCase()
 const paymentIcon = (p) => p === 'cod' ? Banknote : p === 'card' ? CreditCard : Wallet
@@ -139,11 +140,10 @@ export default function BookingDetail() {
           <ul className="mt-3 divide-y">
             {booking.items?.map(it => (
               <li key={it.slug} className="py-3 flex items-center gap-3">
-                {it.img ? (
-                  <img src={it.img} alt="" className="w-12 h-12 rounded-lg object-cover bg-neutral-100" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-brand-50" />
-                )}
+                {(() => {
+                  const Icon = iconForService(it.name)
+                  return <Icon className="w-12 h-12 rounded-lg bg-neutral-100 p-2.5 text-cocoa shrink-0" strokeWidth={1.5} />
+                })()}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-neutral-900 truncate">{it.name}</div>
                   <div className="text-xs text-neutral-500">Qty {it.qty}{it.duration ? ` · ${it.duration}` : ''}</div>
@@ -225,7 +225,7 @@ export default function BookingDetail() {
             </label>
             <div className="mt-5 flex gap-2">
               <button onClick={() => setShowReschedule(false)} className="flex-1 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">Back</button>
-              <button onClick={onConfirmReschedule} disabled={!newAt} className="flex-1 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold py-2.5 text-sm">Confirm</button>
+              <button onClick={onConfirmReschedule} disabled={!newAt} className="flex-1 rounded-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-cocoa font-semibold py-2.5 text-sm">Confirm</button>
             </div>
           </div>
         </div>

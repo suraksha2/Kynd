@@ -7,7 +7,7 @@ const API_BASE = 'http://localhost:3001'
 export default function BookingConfirmed() {
   const { state } = useLocation()
   const [order, setOrder] = useState(state || (() => {
-    try { return JSON.parse(localStorage.getItem('helpr.lastOrder') || 'null') } catch { return null }
+    try { return JSON.parse(localStorage.getItem('kynd.lastOrder') || 'null') } catch { return null }
   })())
   const [verifying, setVerifying] = useState(false)
   const [verificationError, setVerificationError] = useState(null)
@@ -16,7 +16,7 @@ export default function BookingConfirmed() {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const pendingOrderStr = localStorage.getItem('helpr.pendingOrder')
+        const pendingOrderStr = localStorage.getItem('kynd.pendingOrder')
         if (!pendingOrderStr) return
 
         const pendingOrder = JSON.parse(pendingOrderStr)
@@ -52,8 +52,8 @@ export default function BookingConfirmed() {
         }
 
         // Clear pending order and set confirmed order
-        localStorage.removeItem('helpr.pendingOrder')
-        try { localStorage.setItem('helpr.lastOrder', JSON.stringify(paidOrder)) } catch {}
+        localStorage.removeItem('kynd.pendingOrder')
+        try { localStorage.setItem('kynd.lastOrder', JSON.stringify(paidOrder)) } catch {}
         setOrder(paidOrder)
       } catch (error) {
         console.error('Payment verification error:', error)
@@ -92,7 +92,7 @@ export default function BookingConfirmed() {
           <div className="rounded-3xl bg-white ring-1 ring-neutral-100 shadow-soft p-8 text-center">
             <h1 className="mt-5 text-3xl md:text-4xl font-extrabold text-red-600">Payment verification failed</h1>
             <p className="mt-2 text-neutral-500">{verificationError}</p>
-            <Link to="/cart" className="mt-6 inline-block rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3 text-sm">Return to cart</Link>
+            <Link to="/cart" className="mt-6 inline-block rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold px-6 py-3 text-sm">Return to cart</Link>
           </div>
         </div>
       </section>
@@ -133,7 +133,7 @@ export default function BookingConfirmed() {
 
           <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/" className="rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-semibold px-6 py-3 text-sm">Back to home</Link>
-            <Link to={`/bookings/${order.bookingId}`} className="rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3 text-sm">View booking</Link>
+            <Link to={`/bookings/${order.bookingId}`} className="rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold px-6 py-3 text-sm">View booking</Link>
             <Link to="/services" className="rounded-full bg-white ring-1 ring-neutral-200 hover:ring-brand-300 text-neutral-900 font-semibold px-6 py-3 text-sm">Book another</Link>
           </div>
         </div>

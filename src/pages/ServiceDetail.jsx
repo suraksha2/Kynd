@@ -4,6 +4,7 @@ import { Check, X, ShoppingBag, Zap, Clock, Tag } from 'lucide-react'
 import CitiesGrid from '../components/CitiesGrid'
 import { useCart } from '../context/CartContext'
 import { useServices } from '../context/ServicesContext'
+import { iconForService } from '../lib/serviceIcon'
 import { DownloadCta } from './Home'
 
 const BookingCard = ({ svc }) => {
@@ -29,7 +30,7 @@ const BookingCard = ({ svc }) => {
         <button onClick={onAdd} className={`rounded-full font-semibold text-sm py-2.5 transition ${added ? 'bg-brand-50 text-brand-700' : 'bg-neutral-900 hover:bg-neutral-800 text-white'}`}>
           {added ? 'Added ✓' : 'Add to cart'}
         </button>
-        <button onClick={onBook} className="rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm py-2.5 transition">
+        <button onClick={onBook} className="rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold text-sm py-2.5 transition">
           Book now
         </button>
       </div>
@@ -39,7 +40,9 @@ const BookingCard = ({ svc }) => {
 }
 
 /* ---------- Compact hero matching the reference screenshot ---------- */
-const ServiceHero = ({ svc }) => (
+const ServiceHero = ({ svc }) => {
+  const HeroIcon = iconForService(svc.name)
+  return (
   <section className="relative overflow-hidden bg-white pt-28 md:pt-32 pb-10">
     {/* soft green corner blobs to match the screenshot */}
     <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-brand-100/70 blur-3xl pointer-events-none" />
@@ -69,8 +72,8 @@ const ServiceHero = ({ svc }) => (
               <span>{svc.rating || 4.9} from <strong className="text-neutral-700">{svc.reviewCount ? `${svc.reviewCount.toLocaleString()}+` : '15,000+'}</strong> homes</span>
             </div>
           </div>
-          <div className="mt-5 w-full md:w-[260px] aspect-[4/3] rounded-3xl overflow-hidden bg-neutral-100 shadow-soft md:hidden">
-            <img src={svc.img} alt={svc.name} className="w-full h-full object-cover" />
+          <div className="mt-5 w-full md:w-[260px] aspect-[4/3] rounded-3xl overflow-hidden bg-neutral-100 shadow-soft md:hidden grid place-items-center">
+            <HeroIcon className="w-16 h-16 md:w-20 md:h-20 text-cocoa" strokeWidth={1.75} />
           </div>
           <div className="mt-6">
             <BookingCard svc={svc} />
@@ -78,20 +81,21 @@ const ServiceHero = ({ svc }) => (
         </div>
 
         {/* tile image (rounded-3xl) - desktop */}
-        <div className="hidden md:block w-full md:w-[260px] aspect-[4/3] rounded-3xl overflow-hidden bg-neutral-100 shadow-soft">
-          <img src={svc.img} alt={svc.name} className="w-full h-full object-cover" />
+        <div className="hidden md:block w-full md:w-[260px] aspect-[4/3] rounded-3xl overflow-hidden bg-neutral-100 shadow-soft grid place-items-center">
+          <HeroIcon className="w-16 h-16 md:w-20 md:h-20 text-cocoa" strokeWidth={1.75} />
         </div>
       </div>
     </div>
   </section>
-)
+  )
+}
 
 /* ---------- What's included / Not included two-column block ---------- */
 const Inclusions = ({ svc }) => {
   const notIncluded = svc.notIncluded || [
     'Specialty deep-clean services such as ceiling, exterior facade or fumigation',
     'Removal of heavy or industrial machinery',
-    'Use of harsh chemicals not approved by Helpr',
+    'Use of harsh chemicals not approved by Kynd',
     'Pickup or disposal of hazardous waste',
     'Anything outside the scope of the booked service',
     'No-stage rescue / handling of belongings beyond reach'
@@ -101,7 +105,7 @@ const Inclusions = ({ svc }) => {
       <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-10">
         <div>
           <h2 className="flex items-center gap-2 text-xl md:text-2xl font-extrabold text-brand-900">
-            <span className="w-6 h-6 rounded-full bg-brand-600 text-white grid place-items-center">
+            <span className="w-6 h-6 rounded-full bg-brand-400 text-cocoa grid place-items-center">
               <Check className="w-4 h-4" strokeWidth={3} />
             </span>
             What's included
@@ -153,12 +157,10 @@ const MoreServices = ({ currentSlug, allServices }) => {
               className="group rounded-2xl bg-white p-3 md:p-4 hover:shadow-soft transition flex flex-col items-center text-center"
             >
               <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100 grid place-items-center">
-                <img
-                  src={s.img}
-                  alt={s.name}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
-                />
+                {(() => {
+                  const Icon = iconForService(s.name)
+                  return <Icon className="w-10 h-10 md:w-12 md:h-12 text-cocoa group-hover:scale-[1.08] transition duration-300" strokeWidth={1.75} />
+                })()}
               </div>
               <div className="mt-2 text-[11px] md:text-xs font-medium text-neutral-700 leading-snug">
                 {s.name}

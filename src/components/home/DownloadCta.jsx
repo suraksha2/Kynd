@@ -5,7 +5,7 @@ export default function DownloadCta() {
   return (
     <section id="download" className="py-16">
       <div className="max-w-6xl mx-auto px-4 md:px-6">
-        <div className="rounded-[36px] bg-brand-600 text-white px-6 md:px-10 py-14 md:py-16 text-center relative overflow-hidden">
+        <div className="rounded-[36px] bg-cocoa-900 text-white px-6 md:px-10 py-14 md:py-16 text-center relative overflow-hidden">
           <div className="flex justify-center -mb-2">
             <div className="flex items-end -space-x-8">
               <PhoneMockup screen="home" size="sm" className="-rotate-[8deg]" />
@@ -13,9 +13,9 @@ export default function DownloadCta() {
             </div>
           </div>
           <h2 className="mt-10 text-3xl md:text-4xl font-extrabold tracking-tight">
-            Get trusted house help in<br />minutes.
+            Trusted help,<br />kindly done.
           </h2>
-          <p className="mt-3 text-white/85">Download the Helpr app and book your first service today.</p>
+          <p className="mt-3 text-white/85">Download the Kynd app and book your first service today.</p>
           <StoreButtons className="mt-6" />
         </div>
       </div>

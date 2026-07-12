@@ -43,7 +43,7 @@ export default function ForgotPassword() {
             <div className="mt-6 space-y-3">
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center gap-2 w-full rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 transition"
+                className="inline-flex items-center justify-center gap-2 w-full rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold py-3 transition"
               >
                 Back to sign in
               </Link>
@@ -69,7 +69,7 @@ export default function ForgotPassword() {
           </Link>
 
           <div className="text-center">
-            <Link to="/" className="text-brand-500 font-extrabold text-3xl tracking-tight">Helpr</Link>
+            <Link to="/" className="text-cocoa font-extrabold text-3xl tracking-tight">Kynd</Link>
             <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold text-neutral-900">Forgot password?</h1>
             <p className="mt-1.5 text-sm text-neutral-500">Enter your email to receive a reset link.</p>
           </div>
@@ -102,7 +102,7 @@ export default function ForgotPassword() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 transition"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 hover:bg-brand-500 disabled:opacity-60 disabled:cursor-not-allowed text-cocoa font-semibold py-3 transition"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Sending...' : 'Send reset link'}

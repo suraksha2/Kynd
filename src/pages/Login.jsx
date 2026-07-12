@@ -37,7 +37,7 @@ export default function Login() {
       <div className="max-w-md mx-auto px-5 sm:px-6">
         <div className="bg-white rounded-3xl ring-1 ring-neutral-100 shadow-soft p-6 sm:p-8">
           <div className="text-center">
-            <Link to="/" className="text-brand-500 font-extrabold text-3xl tracking-tight">Helpr</Link>
+            <Link to="/" className="text-cocoa font-extrabold text-3xl tracking-tight">Kynd</Link>
             <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold text-neutral-900">Welcome back</h1>
             <p className="mt-1.5 text-sm text-neutral-500">Sign in to manage your bookings.</p>
           </div>
@@ -108,7 +108,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 transition"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 hover:bg-brand-500 disabled:opacity-60 disabled:cursor-not-allowed text-cocoa font-semibold py-3 transition"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Signing in…' : 'Sign in'}
@@ -116,7 +116,7 @@ export default function Login() {
           </form>
 
           <p className="mt-6 text-center text-sm text-neutral-600">
-            New to Helpr?{' '}
+            New to Kynd?{' '}
             <Link to="/signup" className="font-semibold text-brand-700 hover:text-brand-800">Create an account</Link>
           </p>
         </div>

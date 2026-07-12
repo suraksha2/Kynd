@@ -52,7 +52,7 @@ export default function ResetPassword() {
             </p>
             <Link
               to="/forgot-password"
-              className="mt-6 inline-flex items-center justify-center w-full rounded-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 transition"
+              className="mt-6 inline-flex items-center justify-center w-full rounded-full bg-brand-400 hover:bg-brand-500 text-cocoa font-semibold py-3 transition"
             >
               Request new reset link
             </Link>
@@ -85,7 +85,7 @@ export default function ResetPassword() {
       <div className="max-w-md mx-auto px-5 sm:px-6">
         <div className="bg-white rounded-3xl ring-1 ring-neutral-100 shadow-soft p-6 sm:p-8">
           <div className="text-center">
-            <Link to="/" className="text-brand-500 font-extrabold text-3xl tracking-tight">Helpr</Link>
+            <Link to="/" className="text-cocoa font-extrabold text-3xl tracking-tight">Kynd</Link>
             <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold text-neutral-900">Reset password</h1>
             <p className="mt-1.5 text-sm text-neutral-500">Create a new password for your account.</p>
           </div>
@@ -146,7 +146,7 @@ export default function ResetPassword() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 transition"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 hover:bg-brand-500 disabled:opacity-60 disabled:cursor-not-allowed text-cocoa font-semibold py-3 transition"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Resetting...' : 'Reset password'}

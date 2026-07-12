@@ -3,6 +3,7 @@ import { MapPin, Star } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import StoreButtons from '../components/StoreButtons'
 import CitiesGrid from '../components/CitiesGrid'
+import { iconForService } from '../lib/serviceIcon'
 import { DownloadCta } from './Home'
 
 /* ---------- City hero ---------- */
@@ -24,7 +25,7 @@ const CityHero = ({ city }) => (
       <div className="grid md:grid-cols-[1fr_auto] gap-8 items-start">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-brand-700">
-            <MapPin className="w-3.5 h-3.5" /> Helpr in {city.name}
+            <MapPin className="w-3.5 h-3.5" /> Kynd in {city.name}
           </div>
           <h1 className="mt-2 text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 leading-[1.05]">
             House help in<br />{city.name}, in minutes.
@@ -150,14 +151,12 @@ const ServicesInCity = ({ city }) => {
                 to={`/services/${s.slug}`}
                 className="group rounded-2xl bg-neutral-50 p-3 md:p-4 hover:shadow-soft hover:bg-white transition flex flex-col items-center text-center"
               >
-                <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100">
-                  <img
-                    src={s.img}
-                    alt={s.name}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-[1.04] transition duration-500"
-                  />
-                </div>
+                <div className="w-full aspect-square rounded-xl overflow-hidden bg-neutral-100 grid place-items-center">
+                {(() => {
+                  const Icon = iconForService(s.name)
+                  return <Icon className="w-10 h-10 md:w-12 md:h-12 text-cocoa group-hover:scale-[1.08] transition duration-300" strokeWidth={1.75} />
+                })()}
+              </div>
                 <div className="mt-2 text-[11px] md:text-xs font-medium text-neutral-700 leading-snug">
                   {s.name}
                 </div>

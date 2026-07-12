@@ -5,6 +5,7 @@ import CitiesGrid from '../components/CitiesGrid'
 import { useCart } from '../context/CartContext'
 import { useServices } from '../context/ServicesContext'
 import { iconForService } from '../lib/serviceIcon'
+import { API_BASE } from '../lib/api'
 import { DownloadCta } from './Home'
 
 const BookingCard = ({ svc }) => {
@@ -195,8 +196,8 @@ export default function ServiceDetail() {
       if (!svc) return
       try {
         const [catRes, cityRes] = await Promise.all([
-          fetch('http://localhost:3001/api/service-categories'),
-          fetch('http://localhost:3001/api/cities'),
+          fetch(`${API_BASE}/service-categories`),
+          fetch(`${API_BASE}/cities`),
         ])
         const catJson = await catRes.json()
         const cityJson = await cityRes.json()

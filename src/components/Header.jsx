@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X, ShoppingBag, User, LogOut } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useServices } from '../context/ServicesContext'
+import { API_BASE } from '../lib/api'
 
 function AuthButton({ compact = false }) {
   const { user, isAuthenticated, logout } = useAuth()
@@ -191,7 +192,7 @@ export default function Header() {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/cities')
+        const response = await fetch(`${API_BASE}/cities`)
         if (!response.ok) throw new Error('Failed to fetch cities')
         const result = await response.json()
         const data = result.data || []

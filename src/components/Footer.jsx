@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useServices } from '../context/ServicesContext'
+import { API_BASE } from '../lib/api'
 
 export default function Footer() {
   const { services } = useServices()
@@ -9,7 +10,7 @@ export default function Footer() {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/cities')
+        const response = await fetch(`${API_BASE}/cities`)
         if (!response.ok) throw new Error('Failed to fetch cities')
         const result = await response.json()
         const data = result.data || []

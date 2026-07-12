@@ -9,7 +9,10 @@ import {
   type SessionPayload,
 } from '@/lib/auth'
 
-const allowedOrigins = [
+// Local dev origins that are always allowed. Production origins are supplied
+// via the ALLOWED_ORIGINS env var (comma-separated list of full origins,
+// e.g. "https://app.helpr.com,https://admin.helpr.com").
+const devOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   // Standalone admin console (separate Vite app / Node process).
@@ -20,6 +23,13 @@ const allowedOrigins = [
   'http://localhost:5176',
   'http://127.0.0.1:5176',
 ]
+
+const envOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
+const allowedOrigins = Array.from(new Set([...devOrigins, ...envOrigins]))
 
 // Page routes that anyone may reach without an admin session.
 const PUBLIC_PAGES = ['/login']
@@ -51,7 +61,7 @@ async function refreshSessionCookie(
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: SESSION_MAX_AGE_SECONDS,
   })

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { iconForService } from '../lib/serviceIcon'
+import { API_BASE } from '../lib/api'
 
 export default function Services() {
   const [services, setServices] = useState([])
@@ -9,7 +10,7 @@ export default function Services() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/services')
+        const response = await fetch(`${API_BASE}/services`)
         const result = await response.json()
         if (result.data) {
           const mappedServices = result.data.map(service => ({

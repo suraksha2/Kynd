@@ -1,8 +1,7 @@
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-
-const API_BASE = 'http://localhost:3001'
+import { API_ORIGIN as API_BASE } from '../lib/api'
 
 export default function BookingConfirmed() {
   const { state } = useLocation()

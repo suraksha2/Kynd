@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react'
 import StoreButtons from '../StoreButtons'
 import PhoneMockup from '../PhoneMockup'
 import { cities } from '../../data/cities'
-
-const API_BASE = 'http://localhost:3001'
+import { API_ORIGIN as API_BASE } from '../../lib/api'
 
 const HeroFigure = () => (
   <img

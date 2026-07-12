@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { iconForService } from '../../lib/serviceIcon'
 import { useCart } from '../../context/CartContext'
+import { API_BASE } from '../../lib/api'
 
 const ServiceTile = ({ s }) => {
   const { addItem } = useCart()
@@ -43,7 +44,7 @@ export default function Services() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/services')
+        const response = await fetch(`${API_BASE}/services`)
         const result = await response.json()
         if (result.data) {
           const mappedServices = result.data.map(service => ({

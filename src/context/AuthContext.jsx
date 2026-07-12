@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { API_BASE } from '../lib/api'
 
 const AuthContext = createContext(null)
 const USER_KEY = 'kynd.auth.user.v1'
-const API_BASE = 'http://localhost:3001/api'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {

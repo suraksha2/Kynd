@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { API_BASE } from '../lib/api'
 
 const ServicesContext = createContext()
 
@@ -16,7 +17,7 @@ export function ServicesProvider({ children }) {
 
   const fetchServices = async (slugs = null) => {
     try {
-      let url = 'http://localhost:3001/api/services'
+      let url = `${API_BASE}/services`
       if (slugs && slugs.length > 0) {
         url += `?slugs=${slugs.join(',')}`
       }

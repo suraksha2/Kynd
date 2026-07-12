@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import StoreButtons from '../components/StoreButtons'
 import CitiesGrid from '../components/CitiesGrid'
 import { iconForService } from '../lib/serviceIcon'
+import { API_BASE } from '../lib/api'
 import { DownloadCta } from './Home'
 
 /* ---------- City hero ---------- */
@@ -99,8 +100,8 @@ const ServicesInCity = ({ city }) => {
     const fetchServices = async () => {
       try {
         const [servicesRes, catRes] = await Promise.all([
-          fetch('http://localhost:3001/api/services'),
-          fetch('http://localhost:3001/api/service-categories'),
+          fetch(`${API_BASE}/services`),
+          fetch(`${API_BASE}/service-categories`),
         ])
         const servicesResult = await servicesRes.json()
         const catResult = await catRes.json()
@@ -182,7 +183,7 @@ export default function CityDetail() {
       try {
         // Convert slug to city name (e.g., "pune" -> "Pune")
         const cityName = slug ? slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : ''
-        const response = await fetch(`http://localhost:3001/api/cities/by-name/${encodeURIComponent(cityName)}`)
+        const response = await fetch(`${API_BASE}/cities/by-name/${encodeURIComponent(cityName)}`)
         const data = await response.json()
         
         if (isMounted) {

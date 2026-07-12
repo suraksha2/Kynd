@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { API_BASE } from '../lib/api'
 import {
   IonGrid,
   IonRow,
@@ -21,7 +22,7 @@ export default function Cities() {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/cities')
+        const response = await fetch(`${API_BASE}/cities`)
         const result = await response.json()
         const data = result.data || []
         const transformedCities = data.map(city => ({

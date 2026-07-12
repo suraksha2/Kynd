@@ -3,8 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { CreditCard, Wallet, Banknote, ShieldCheck } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useBookings } from '../context/BookingsContext'
-
-const API_BASE = 'http://localhost:3001'
+import { API_ORIGIN as API_BASE } from '../lib/api'
 
 const Field = ({ label, children }) => (
   <label className="block">
@@ -37,7 +36,7 @@ export default function Checkout() {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/cities')
+        const response = await fetch(`${API_BASE}/api/cities`)
         if (!response.ok) {
           throw new Error('Failed to fetch cities')
         }

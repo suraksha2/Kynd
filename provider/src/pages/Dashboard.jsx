@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Wrench, LogOut, RefreshCw, Loader2, Calendar, Clock, MapPin,
-  Phone, User, IndianRupee, CheckCircle2, XCircle, CircleDot, AlertCircle,
+  Phone, User, DollarSign, CheckCircle2, XCircle, CircleDot, AlertCircle,
 } from 'lucide-react'
 import { useAuth, API_BASE } from '../context/AuthContext'
 
@@ -239,8 +239,8 @@ function TaskCard({ booking, updating, onUpdate }) {
             className="sm:col-span-2"
           />
           <Detail
-            icon={IndianRupee}
-            label={`${Number(booking.total).toLocaleString('en-IN')} · ${booking.payment}`}
+            icon={DollarSign}
+            label={`S$${Number(booking.total).toLocaleString('en-SG')} · ${booking.payment}`}
           />
         </div>
       </div>

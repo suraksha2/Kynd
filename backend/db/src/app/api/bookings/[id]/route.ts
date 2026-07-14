@@ -2,6 +2,75 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/mysql';
 import { sendProviderAssignmentWhatsApp } from '@/lib/whatsapp';
 
+function getSessionToken(request: NextRequest): string | undefined {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    return authHeader.slice(7).trim();
+  }
+  return request.cookies.get('admin_session')?.value;
+}
+
+// PATCH cancel booking (for clients)
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await req.json();
+    const { status, reason } = body;
+
+    if (!status || status !== 'cancelled') {
+      return NextResponse.json(
+        { error: 'Only cancellation is allowed via this endpoint' },
+        { status: 400 }
+      );
+    }
+
+    // Check if booking exists
+    const [rows]: any = await pool.query(
+      'SELECT id, history, contact_phone FROM bookings WHERE id = ?',
+      [params.id]
+    );
+
+    if (!rows || rows.length === 0) {
+      return NextResponse.json({ error: 'Booking not found.' }, { status: 404 });
+    }
+
+    const booking = rows[0];
+
+    // Append cancellation to history
+    let history: any[] = [];
+    try {
+      history = typeof booking.history === 'string'
+        ? JSON.parse(booking.history)
+        : (booking.history || []);
+      if (!Array.isArray(history)) history = [];
+    } catch {
+      history = [];
+    }
+
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    history.push({
+      at: now,
+      type: 'cancelled',
+      note: reason || 'Cancelled by client',
+    });
+
+    await pool.query(
+      'UPDATE bookings SET status = ?, history = ? WHERE id = ?',
+      [status, JSON.stringify(history), params.id]
+    );
+
+    return NextResponse.json({ success: true, status }, { status: 200 });
+  } catch (error) {
+    console.error('[PATCH /api/bookings/[id]]', error);
+    return NextResponse.json(
+      { error: 'Failed to cancel booking' },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT assign provider to booking
 export async function PUT(
   req: NextRequest,

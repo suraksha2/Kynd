@@ -84,6 +84,9 @@ function isPublicApi(pathname: string, method: string): boolean {
   // Auth flows validate credentials themselves.
   if (pathname.startsWith('/api/auth/')) return true
 
+  // Provider APIs are gated by the route handlers themselves (provider or admin).
+  if (pathname.startsWith('/api/provider/')) return true
+
   if (method === 'GET') {
     if (/^\/api\/services(\/[^/]+)?$/.test(pathname)) return true
     if (/^\/api\/cities(\/.+)?$/.test(pathname)) return true

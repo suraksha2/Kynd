@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, Menu, X, ShoppingBag, User, LogOut } from 'lucide-react'
+import { ChevronDown, Menu, X, ShoppingBag, User, LogOut, ShoppingBag as Package, UserCircle } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useServices } from '../context/ServicesContext'
@@ -50,7 +50,21 @@ function AuthButton({ compact = false }) {
               <div className="text-sm font-semibold text-neutral-900 truncate">{user?.name}</div>
               <div className="text-xs text-neutral-500 truncate">{user?.email}</div>
             </div>
-            <div className="mt-2 pt-2 border-t border-neutral-100">
+            <div className="mt-2 pt-2 border-t border-neutral-100 space-y-0.5">
+              <Link
+                to="/account"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 text-sm text-neutral-700 hover:bg-brand-50 hover:text-brand-700 rounded-md px-2 py-1.5 transition"
+              >
+                <UserCircle className="w-4 h-4" /> Profile
+              </Link>
+              <Link
+                to="/bookings"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 text-sm text-neutral-700 hover:bg-brand-50 hover:text-brand-700 rounded-md px-2 py-1.5 transition"
+              >
+                <Package className="w-4 h-4" /> My bookings
+              </Link>
               <button
                 onClick={() => { logout(); navigate('/login'); setOpen(false) }}
                 className="w-full flex items-center gap-2 text-sm text-neutral-700 hover:bg-brand-50 hover:text-brand-700 rounded-md px-2 py-1.5 transition"
@@ -75,7 +89,11 @@ function MobileAuthLinks() {
           <div className="text-sm font-semibold text-neutral-900 truncate">{user?.name}</div>
           <div className="text-xs text-neutral-500 truncate">{user?.email}</div>
         </div>
-        <button onClick={() => { logout(); navigate('/login') }} className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">
+        <div className="mt-2 space-y-1">
+          <Link to="/account" className="block py-2 text-neutral-700">Profile</Link>
+          <Link to="/bookings" className="block py-2 text-neutral-700">My bookings</Link>
+        </div>
+        <button onClick={() => { logout(); navigate('/login') }} className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold py-2.5 text-sm">
           <LogOut className="w-4 h-4" /> Sign out
         </button>
       </div>

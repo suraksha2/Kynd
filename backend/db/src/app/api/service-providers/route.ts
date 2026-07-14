@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/mysql';
+import bcrypt from 'bcryptjs';
 
 // GET all service providers
 export async function GET() {
@@ -35,7 +36,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, mobile, services, city, status = 'active', avatar } = body;
+    const { name, email, mobile, services, city, status = 'active', avatar, password } = body;
 
     if (!name || !email || !mobile || !services || !city) {
       return NextResponse.json(
@@ -44,10 +45,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Optional login password for the provider portal.
+    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+
     const [result] = await pool.query(
-      `INSERT INTO service_providers (name, email, mobile, services, city, status, avatar)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, mobile, JSON.stringify(services), city, status, avatar || null]
+      `INSERT INTO service_providers (name, email, password_hash, mobile, services, city, status, avatar)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, email.trim().toLowerCase(), passwordHash, mobile, JSON.stringify(services), city, status, avatar || null]
     );
 
     return NextResponse.json(
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, name, email, mobile, services, city, status, avatar } = body;
+    const { id, name, email, mobile, services, city, status, avatar, password } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -79,11 +83,20 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Only update the password when a new one is explicitly provided.
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      await pool.query(
+        'UPDATE service_providers SET password_hash = ? WHERE id = ?',
+        [passwordHash, id]
+      );
+    }
+
     const [result] = await pool.query(
       `UPDATE service_providers 
        SET name = ?, email = ?, mobile = ?, services = ?, city = ?, status = ?, avatar = ?
        WHERE id = ?`,
-      [name, email, mobile, JSON.stringify(services), city, status, avatar, id]
+      [name, email.trim().toLowerCase(), mobile, JSON.stringify(services), city, status, avatar, id]
     );
 
     return NextResponse.json(

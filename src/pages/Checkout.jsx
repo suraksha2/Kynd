@@ -112,10 +112,12 @@ export default function Checkout() {
     if (!response.ok) {
       throw new Error(data.error || 'Failed to create booking')
     }
-    try { localStorage.setItem('kynd.lastOrder', JSON.stringify(order)) } catch {}
-    addBooking(order)
+    // Store the database ID from the backend response
+    const orderWithId = { ...order, id: data.id }
+    try { localStorage.setItem('kynd.lastOrder', JSON.stringify(orderWithId)) } catch {}
+    addBooking(orderWithId)
     clear()
-    navigate('/booking/confirmed', { state: order, replace: true })
+    navigate('/booking/confirmed', { state: orderWithId, replace: true })
   }
 
   const submit = async (e) => {

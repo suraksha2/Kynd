@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { API_BASE } from '../lib/api'
 
 const BookingsContext = createContext(null)
 const STORAGE_KEY = 'kynd.bookings.v1'
@@ -40,7 +41,8 @@ export function BookingsProvider({ children }) {
     return booking
   }, [])
 
-  const cancelBooking = useCallback((bookingId, reason = '') => {
+  const cancelBooking = useCallback(async (bookingId, reason = '') => {
+    // First update local state for immediate UI feedback
     setBookings(prev => prev.map(b => b.bookingId === bookingId
       ? {
           ...b,
@@ -51,7 +53,25 @@ export function BookingsProvider({ children }) {
         }
       : b
     ))
-  }, [])
+
+    // Then sync with backend
+    try {
+      const booking = bookings.find(b => b.bookingId === bookingId)
+      if (!booking?.id) return
+
+      const response = await fetch(`${API_BASE}/bookings/${booking.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled', reason })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to cancel booking on backend:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error cancelling booking:', error)
+    }
+  }, [bookings])
 
   const rescheduleBooking = useCallback((bookingId, newAt) => {
     setBookings(prev => prev.map(b => b.bookingId === bookingId

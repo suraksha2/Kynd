@@ -68,8 +68,8 @@ export default function BookingDetail() {
     rescheduleBooking(booking.bookingId, new Date(newAt).toISOString())
     setShowReschedule(false)
   }
-  const onConfirmCancel = () => {
-    cancelBooking(booking.bookingId, reason.trim())
+  const onConfirmCancel = async () => {
+    await cancelBooking(booking.bookingId, reason.trim())
     setShowCancel(false)
   }
 

@@ -2,16 +2,7 @@ import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, API_BASE } from "../context/AuthContext";
-
-// Service images are stored as relative paths (e.g. "/images/foo.webp") that
-// are served by the backend (Next.js), not this admin app. Resolve them against
-// the backend origin so they load correctly from :5174.
-const ASSET_BASE = API_BASE.replace(/\/api\/?$/, "");
-const resolveImage = (path) => {
-  if (!path) return "";
-  if (/^https?:\/\//i.test(path)) return path;
-  return `${ASSET_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
-};
+import { iconForService } from "../lib/serviceIcon";
 
 export default function AdminPanel() {
   const { token, user, logout } = useAuth();
@@ -33,10 +24,13 @@ export default function AdminPanel() {
     mobile: '',
     services: [],
     city: '',
-    status: 'active'
+    status: 'active',
+    password: ''
   });
   const [availableServices, setAvailableServices] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
+  const [sortField, setSortField] = useState('date');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -248,7 +242,8 @@ export default function AdminPanel() {
           mobile: '',
           services: [],
           city: '',
-          status: 'active'
+          status: 'active',
+          password: ''
         });
       } else {
         alert(data.error || "Failed to add provider");
@@ -267,6 +262,29 @@ export default function AdminPanel() {
         : [...prev.services, serviceName]
     }));
   };
+
+  // Handle sorting
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Sort orders
+  const sortedOrders = [...orders].sort((a, b) => {
+    let comparison = 0;
+    if (sortField === 'date') {
+      comparison = new Date(a.date) - new Date(b.date);
+    } else if (sortField === 'amount') {
+      comparison = (a.amount || 0) - (b.amount || 0);
+    } else if (sortField === 'status') {
+      comparison = (a.status || '').localeCompare(b.status || '');
+    }
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
 
   return (
     <div className="min-h-screen bg-cream">
@@ -379,10 +397,25 @@ export default function AdminPanel() {
             <>
               {/* Sort Header */}
               <div className="flex items-center gap-10 px-8 py-5 border-b border-gray-100 text-sm font-medium text-gray-500">
-                <button className="text-gray-400">Sort by:</button>
-                <button className="text-green-500 font-semibold">Date ↑↓</button>
-                <button>Amount</button>
-                <button>Status</button>
+                <span className="text-gray-400">Sort by:</span>
+                <button
+                  onClick={() => handleSort('date')}
+                  className={`${sortField === 'date' ? 'text-green-500 font-semibold' : 'hover:text-gray-700'}`}
+                >
+                  Date {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
+                <button
+                  onClick={() => handleSort('amount')}
+                  className={`${sortField === 'amount' ? 'text-green-500 font-semibold' : 'hover:text-gray-700'}`}
+                >
+                  Amount {sortField === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
+                <button
+                  onClick={() => handleSort('status')}
+                  className={`${sortField === 'status' ? 'text-green-500 font-semibold' : 'hover:text-gray-700'}`}
+                >
+                  Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
               </div>
 
               {/* Orders List */}
@@ -404,7 +437,7 @@ export default function AdminPanel() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {orders.map((order) => (
+                    {sortedOrders.map((order) => (
                       <div key={order.id} className="grid grid-cols-[minmax(0,1fr)_140px_100px_140px] items-center gap-4 p-4 bg-gray-50 rounded-xl">
                         <div className="flex items-center gap-4 min-w-0">
                           <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-semibold shrink-0">
@@ -466,14 +499,12 @@ export default function AdminPanel() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {services.map((service) => (
+                  {services.map((service) => {
+                    const Icon = iconForService(service.name);
+                    return (
                     <div key={service.id} className="p-4 bg-gray-50 rounded-xl">
-                      <div className="w-full h-32 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                        {service.image ? (
-                          <img src={resolveImage(service.image)} alt={service.name} className="w-full h-full object-cover rounded-lg" />
-                        ) : (
-                          <span className="text-gray-400">No image</span>
-                        )}
+                      <div className="w-full h-32 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
+                        <Icon className="w-14 h-14 text-cocoa" strokeWidth={1.75} />
                       </div>
                       <h3 className="font-semibold text-gray-900">{service.name}</h3>
                       <p className="text-sm text-gray-500">{service.category}</p>
@@ -486,7 +517,8 @@ export default function AdminPanel() {
                         </span>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -698,6 +730,17 @@ export default function AdminPanel() {
                   onChange={(e) => setNewProvider({ ...newProvider, mobile: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Enter mobile number"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={newProvider.password}
+                  onChange={(e) => setNewProvider({ ...newProvider, password: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="Enter password for provider login"
                 />
               </div>
 

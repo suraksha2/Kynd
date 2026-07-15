@@ -141,7 +141,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ---- Admin page routes ----
-  if (PUBLIC_PAGES.includes(pathname)) {
+  if (PUBLIC_PAGES.some((p) => pathname.endsWith(p))) {
     return NextResponse.next()
   }
 
@@ -149,7 +149,14 @@ export async function middleware(request: NextRequest) {
   const session = await verifySessionToken(token)
 
   if (!session || !hasAdminAccess(session.role)) {
-    const loginUrl = new URL('/superadmin', request.url)
+    const loginUrl = request.nextUrl.clone()
+    // Replace the last path segment with 'superadmin' to preserve any base path prefix (e.g. /kynd)
+    loginUrl.pathname = loginUrl.pathname.replace(/\/[^/]*$/, '') + '/superadmin'
+    // If the path was just '/', it might become '/superadmin'. If it was '/kynd/dashboard', it becomes '/kynd/superadmin'.
+    // A safer fallback:
+    if (!loginUrl.pathname.endsWith('/superadmin')) {
+      loginUrl.pathname = '/superadmin';
+    }
     return NextResponse.redirect(loginUrl)
   }
 

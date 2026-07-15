@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'Unable to create account.')
 
-    const session = { name: data.name, email: data.email, id: data.id, role: data.role }
+    const session = { name: data.name, email: data.email, id: data.id, role: data.role, token: data.token }
     setUser(session)
     return session
   }

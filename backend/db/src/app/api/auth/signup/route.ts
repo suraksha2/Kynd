@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/mysql';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import {
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,29 +44,46 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert user
+    // Insert user without explicitly listing 'joined', relying on DEFAULT CURRENT_DATE
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password_hash, role, status, joined) VALUES (?, ?, ?, ?, ?, CURDATE())',
+      'INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
       [name.trim(), normalizedEmail, passwordHash, 'user', 'active']
     );
 
     const insertResult = result as any;
     const userId = insertResult.insertId;
+    
+    // Issue session token
+    const token = await createSessionToken({
+      id: userId,
+      email: normalizedEmail,
+      role: 'user',
+    });
 
-    // Return user data without password
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         id: userId,
         name: name.trim(),
         email: normalizedEmail,
-        role: 'user'
+        role: 'user',
+        token,
       },
       { status: 201 }
     );
-  } catch (error) {
+
+    response.cookies.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+
+    return response;
+  } catch (error: any) {
     console.error('Signup error:', error);
     return NextResponse.json(
-      { error: 'Unable to create account.' },
+      { error: 'Unable to create account.', details: error.message },
       { status: 500 }
     );
   }

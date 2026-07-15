@@ -26,7 +26,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!isChecking && !isAuthenticated) {
-      router.push("/login");
+      router.push("/superadmin");
     }
   }, [isAuthenticated, isChecking, router]);
 

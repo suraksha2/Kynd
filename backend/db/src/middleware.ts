@@ -32,7 +32,7 @@ const envOrigins = (process.env.ALLOWED_ORIGINS || '')
 const allowedOrigins = Array.from(new Set([...devOrigins, ...envOrigins]))
 
 // Page routes that anyone may reach without an admin session.
-const PUBLIC_PAGES = ['/login']
+const PUBLIC_PAGES = ['/superadmin']
 
 // Extract a session token from either the httpOnly cookie (same-origin admin
 // panel) or an Authorization: Bearer header (cross-origin customer app).
@@ -47,7 +47,7 @@ function getSessionToken(request: NextRequest): string | undefined {
 // Re-issue the session cookie with a fresh expiry so that actively browsing
 // admins are not silently logged out mid-session (sliding session). Without
 // this, the httpOnly cookie expires after a fixed window even while the user
-// is active, and the next navigation bounces them to /login even though the
+// is active, and the next navigation bounces them to /superadmin even though the
 // client (localStorage) still believes they are signed in.
 async function refreshSessionCookie(
   response: NextResponse,
@@ -149,7 +149,7 @@ export async function middleware(request: NextRequest) {
   const session = await verifySessionToken(token)
 
   if (!session || !hasAdminAccess(session.role)) {
-    const loginUrl = new URL('/login', request.url)
+    const loginUrl = new URL('/superadmin', request.url)
     return NextResponse.redirect(loginUrl)
   }
 

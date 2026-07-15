@@ -37,7 +37,7 @@ export default function Sidebar() {
 
   function handleLogout() {
     logout();
-    router.push("/login");
+    router.push("/superadmin");
   }
 
   return (

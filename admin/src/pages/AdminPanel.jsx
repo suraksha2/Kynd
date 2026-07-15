@@ -293,7 +293,7 @@ export default function AdminPanel() {
       <header className="w-full flex items-center justify-between px-6 pt-4">
 
           {/* Logo */}
-          <img src="/images/logo.png" alt="Kynd" className="h-10 w-auto" />
+          <img src={import.meta.env.BASE_URL + "../images/logo.png"} alt="Kynd" className="h-10 w-auto" />
 
           {/* Right */}
           <div className="flex items-center gap-4 text-sm text-gray-600 font-medium">

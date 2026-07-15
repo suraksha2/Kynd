@@ -17,7 +17,7 @@ export default function Services() {
             id: service.id,
             slug: service.name.toLowerCase().replace(/\s+/g, '-'),
             name: service.name,
-            img: service.image || '/images/hourly-bookings.webp',
+            img: service.image || import.meta.env.BASE_URL + 'images/hourly-bookings.webp',
             price: parseFloat(service.price),
             pricingFrom: `S$${parseFloat(service.price).toFixed(2)}`,
             duration: service.duration || 'Variable'

@@ -7,7 +7,7 @@ import { cities } from '../data/cities'
    If that file isn't present, it falls back to the curated `city.img` URL.
    If even that fails, we render a green gradient with the city name. */
 function CityCard({ city }) {
-  const localSrc = `/images/cities/${city.slug}.webp`
+  const localSrc = `${import.meta.env.BASE_URL}images/cities/${city.slug}.webp`
   const [src, setSrc] = useState(localSrc)
   const [errored, setErrored] = useState(false)
 

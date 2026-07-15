@@ -7,7 +7,7 @@ import { API_ORIGIN as API_BASE } from '../../lib/api'
 
 const HeroFigure = () => (
   <img
-    src="/images/hero-worker.png"
+    src={import.meta.env.BASE_URL + "images/hero-worker.png"}
     alt="Kynd professional"
     className="h-full w-auto object-contain object-bottom select-none pointer-events-none"
     draggable="false"

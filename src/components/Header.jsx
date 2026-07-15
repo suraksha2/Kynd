@@ -243,13 +243,13 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-0">
-            <img src="/images/logo.png" alt="Kynd" className="h-10 md:h-11 w-auto" />
+            <img src={import.meta.env.BASE_URL + "images/logo.png"} alt="Kynd" className="h-10 md:h-11 w-auto" />
           </Link>
 
           {/* Right links */}
           <div className="hidden md:flex items-center gap-6 text-[15px] font-medium text-neutral-800 flex-1 justify-end">
-            <a href="/#how" className="hover:text-brand-700 transition">How it works</a>
-            <a href="/#faq" className="hover:text-brand-700 transition">FAQs</a>
+            <a href={import.meta.env.BASE_URL + "#how"} className="hover:text-brand-700 transition">How it works</a>
+            <a href={import.meta.env.BASE_URL + "#faq"} className="hover:text-brand-700 transition">FAQs</a>
             <CartButton />
             <AuthButton />
           </div>
@@ -297,8 +297,8 @@ export default function Header() {
                 <Link to="/cities" className="py-1 font-semibold text-brand-700 col-span-2">View all cities →</Link>
               </div>
             )}
-            <a href="/#how" className="block py-2">How it works</a>
-            <a href="/#faq" className="block py-2">FAQs</a>
+            <a href={import.meta.env.BASE_URL + "#how"} className="block py-2">How it works</a>
+            <a href={import.meta.env.BASE_URL + "#faq"} className="block py-2">FAQs</a>
             <MobileAuthLinks />
           </div>
         )}

@@ -34,7 +34,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-sm">
           <div className="col-span-2">
             <div className="flex items-center gap-0 text-white text-2xl font-extrabold">
-              <img src="/images/logo2.png" alt="Kynd" className="h-10 w-auto" />
+              <img src={import.meta.env.BASE_URL + "images/logo2.png"} alt="Kynd" className="h-10 w-auto" />
             </div>
             <p className="mt-3 text-neutral-400 max-w-xs">
               Trusted help, kindly done. Download the app and book your first service today.

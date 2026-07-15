@@ -10,7 +10,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password, secret } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -27,6 +27,19 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    // Check admin secret if provided
+    let assignedRole = 'user';
+    if (secret) {
+      if (secret === process.env.ADMIN_SIGNUP_SECRET) {
+        assignedRole = 'super_admin';
+      } else {
+        return NextResponse.json(
+          { error: 'Invalid admin signup secret.' },
+          { status: 403 }
+        );
+      }
+    }
 
     // Check if user already exists
     const [existingUsers] = await pool.query(
@@ -47,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Insert user without explicitly listing 'joined', relying on DEFAULT CURRENT_DATE
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
-      [name.trim(), normalizedEmail, passwordHash, 'user', 'active']
+      [name.trim(), normalizedEmail, passwordHash, assignedRole, 'active']
     );
 
     const insertResult = result as any;
@@ -57,7 +70,7 @@ export async function POST(request: NextRequest) {
     const token = await createSessionToken({
       id: userId,
       email: normalizedEmail,
-      role: 'user',
+      role: assignedRole,
     });
 
     const response = NextResponse.json(
@@ -65,7 +78,7 @@ export async function POST(request: NextRequest) {
         id: userId,
         name: name.trim(),
         email: normalizedEmail,
-        role: 'user',
+        role: assignedRole,
         token,
       },
       { status: 201 }

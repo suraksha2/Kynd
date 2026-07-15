@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import AdminPanel from './pages/AdminPanel'
 
 function RequireAdmin({ children }) {
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/secret-signup" element={<Signup />} />
       <Route
         path="/"
         element={

@@ -58,6 +58,29 @@ export function AuthProvider({ children }) {
     return session
   }
 
+  const adminSignup = async ({ name, email, password, secret }) => {
+    const normalizedEmail = String(email).trim().toLowerCase()
+    if (!name || !normalizedEmail || !password || !secret) throw new Error('All fields are required.')
+    if (password.length < 6) throw new Error('Password must be at least 6 characters.')
+
+    const response = await fetch(`${API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email: normalizedEmail, password, secret })
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'Unable to create account.')
+
+    if (!isAdminRole(data.role)) {
+      throw new Error('This account does not have admin access.')
+    }
+
+    const session = { name: data.name, email: data.email, id: data.id, role: data.role, token: data.token }
+    setUser(session)
+    return session
+  }
+
   const logout = () => setUser(null)
 
   return (
@@ -68,6 +91,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user,
         isAdmin: !!user && isAdminRole(user.role),
         login,
+        adminSignup,
         logout,
       }}
     >
